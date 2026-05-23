@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface WorkshopMembership {
   workshop_id: string;
   role: "dono" | "mecanico" | "atendente";
-  workshops: { id: string; name: string; whatsapp: string | null; logo_url: string | null; plan: string };
+  workshops: { id: string; name: string; whatsapp: string | null; logo_url: string | null; plan: string; created_at: string };
 }
 
 interface AuthContextValue {
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadWorkshop = async (uid: string) => {
     const { data } = await supabase
       .from("workshop_members")
-      .select("workshop_id, role, workshops(id, name, whatsapp, logo_url, plan)")
+      .select("workshop_id, role, workshops(id, name, whatsapp, logo_url, plan, created_at)")
       .eq("user_id", uid)
       .order("created_at", { ascending: true })
       .limit(1)

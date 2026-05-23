@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Car, Plus, Search, Loader2, Trash2, User, DollarSign } from "lucide-react";
+import { Car, Plus, Search, Loader2, Trash2, User, DollarSign, MoreHorizontal, Edit2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPlate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageUpload } from "@/components/ImageUpload";
 
 interface VehicleRow {
   id: string;
@@ -23,6 +26,7 @@ interface VehicleRow {
   plate: string | null;
   color: string | null;
   mileage: number | null;
+  photo_url: string | null;
   client_id: string;
   clients: { name: string } | null;
   orders: { amount: number; paid: boolean }[];
@@ -35,7 +39,8 @@ export default function Vehicles() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "", photo_url: "" as string | null });
 
   const { data: vehicles, isLoading } = useQuery({
     queryKey: ["vehicles", workshopId],
@@ -43,7 +48,7 @@ export default function Vehicles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, brand, model, year, plate, color, mileage, client_id, clients(name), orders(amount, paid)")
+        .select("id, brand, model, year, plate, color, mileage, photo_url, client_id, clients(name), orders(amount, paid)")
         .eq("workshop_id", workshopId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -61,7 +66,6 @@ export default function Vehicles() {
     },
   });
 
-  // Unique list of brands/models for autocomplete
   const { brands, models } = useMemo(() => {
     const b = new Set<string>();
     const m = new Set<string>();
@@ -72,9 +76,9 @@ export default function Vehicles() {
     return { brands: Array.from(b), models: Array.from(m) };
   }, [vehicles]);
 
-  const createMut = useMutation({
+  const upsertMut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("vehicles").insert({
+      const payload = {
         workshop_id: workshopId!,
         client_id: form.client_id,
         brand: form.brand.trim(),
@@ -83,14 +87,23 @@ export default function Vehicles() {
         plate: form.plate || null,
         color: form.color || null,
         mileage: form.mileage ? Number(form.mileage) : null,
-      });
-      if (error) throw error;
+        photo_url: form.photo_url || null,
+      };
+
+      if (editingId) {
+        const { error } = await supabase.from("vehicles").update(payload).eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("vehicles").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Veículo cadastrado!");
+      toast.success(editingId ? "Veículo atualizado!" : "Veículo cadastrado!");
       qc.invalidateQueries({ queryKey: ["vehicles"] });
       setOpen(false);
-      setForm({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "" });
+      setEditingId(null);
+      setForm({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "", photo_url: null });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -107,6 +120,27 @@ export default function Vehicles() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const openEdit = (v: any) => {
+    setEditingId(v.id);
+    setForm({
+      client_id: v.client_id,
+      brand: v.brand || "",
+      model: v.model || "",
+      year: v.year ? String(v.year) : "",
+      plate: v.plate || "",
+      color: v.color || "",
+      mileage: v.mileage ? String(v.mileage) : "",
+      photo_url: v.photo_url || null,
+    });
+    setOpen(true);
+  };
+
+  const openNew = () => {
+    setEditingId(null);
+    setForm({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "", photo_url: null });
+    setOpen(true);
+  };
+
   const filtered = (vehicles ?? []).filter((v) => {
     const q = search.toLowerCase();
     return (
@@ -119,121 +153,205 @@ export default function Vehicles() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-secondary/30">
         <AppSidebar />
         <main className="flex-1 overflow-x-hidden flex flex-col">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-6">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex flex-1 items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Car className="h-5 w-5 text-primary" />
                 <h1 className="font-display text-lg font-semibold tracking-tight">Veículos</h1>
               </div>
-              <Button variant="hero" size="sm" className="gap-2" onClick={() => setOpen(true)} disabled={!clients?.length}>
-                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Cadastrar veículo</span>
+              <Button variant="hero" size="sm" className="gap-2" onClick={openNew} disabled={!clients?.length}>
+                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Cadastrar Veículo</span>
               </Button>
             </div>
           </header>
 
-          <div className="space-y-4 p-4 md:p-6 flex-1 overflow-y-auto">
-            <div className="relative max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por placa, modelo ou cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <div className="space-y-6 p-4 md:p-8 flex-1 overflow-y-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Frota de Clientes</h2>
+                <p className="text-sm text-muted-foreground">Gerencie os veículos atendidos na oficina.</p>
+              </div>
+              <div className="relative w-full sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar veículo ou cliente..." 
+                  value={search} 
+                  onChange={(e) => setSearch(e.target.value)} 
+                  className="pl-10 bg-background" 
+                />
+              </div>
             </div>
 
-            {isLoading ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({length: 6}).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}
-              </div>
-            ) : filtered.length === 0 ? (
-              <Card className="flex flex-col items-center justify-center border-dashed border-border/60 px-6 py-16 text-center shadow-sm">
-                <Car className="h-8 w-8 text-muted-foreground" />
-                <p className="mt-4 font-medium">Nenhum veículo</p>
-                <p className="mt-1 text-sm text-muted-foreground">{clients?.length ? "Cadastre o primeiro veículo." : "Cadastre um cliente antes."}</p>
-              </Card>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {filtered.map((v) => {
-                  const spent = (v.orders || []).filter(o => o.paid).reduce((s, o) => s + Number(o.amount || 0), 0);
-                  
-                  return (
-                    <Card key={v.id} className="group border-border/60 p-5 transition-all hover:border-primary/40 hover:shadow-md">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs uppercase tracking-wider text-muted-foreground">{v.brand}</p>
-                          <p className="font-display text-lg font-bold">{v.model} {v.year && <span className="text-muted-foreground font-normal">{v.year}</span>}</p>
-                        </div>
-                        <button onClick={() => { if (confirm("Excluir veículo?")) delMut.mutate(v.id); }} className="text-muted-foreground opacity-0 transition hover:text-destructive group-hover:opacity-100">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      
-                      {v.plate && (
-                        <span className="mt-2 inline-block rounded border border-border bg-muted px-2 py-1 font-mono text-xs tracking-widest">{v.plate}</span>
-                      )}
-                      
-                      <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/60 pt-4 text-xs">
-                        <div className="col-span-2">
-                          <p className="flex items-center gap-1.5 text-sm text-muted-foreground"><User className="h-3.5 w-3.5" /> {v.clients?.name ?? "—"}</p>
-                        </div>
-                        {v.mileage != null && (
-                          <div className="col-span-2 text-muted-foreground">
-                            Quilometragem: <span className="text-foreground font-medium">{v.mileage.toLocaleString("pt-BR")} km</span>
-                          </div>
-                        )}
-                        <div className="col-span-2 mt-2 bg-muted/50 p-2 rounded-md flex items-center justify-between">
-                          <span className="text-muted-foreground flex items-center gap-1"><DollarSign className="h-3 w-3" /> Total Gasto</span>
-                          <span className="font-display font-bold text-foreground">{formatBRL(spent)}</span>
-                        </div>
-                      </div>
-                    </Card>
-                  )
-                })}
-              </div>
-            )}
+            <Card className="border-border/60 shadow-sm overflow-hidden bg-background">
+              {isLoading ? (
+                <div className="p-8 space-y-4">
+                  {Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                    <Car className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Nenhum veículo encontrado</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                    {search ? "Tente buscar com outros termos." : clients?.length ? "Cadastre o primeiro veículo de um cliente." : "Cadastre um cliente antes de adicionar um veículo."}
+                  </p>
+                  {!search && (
+                    <Button onClick={openNew} variant="outline" className="mt-6 gap-2" disabled={!clients?.length}>
+                      <Plus className="h-4 w-4" /> Cadastrar Veículo
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-secondary/40">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-[300px]">Veículo</TableHead>
+                        <TableHead>Placa</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead className="text-center">KM Registrada</TableHead>
+                        <TableHead className="text-right">Receita Gerada</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((v) => {
+                        const spent = (v.orders || []).filter(o => o.paid).reduce((s, o) => s + Number(o.amount || 0), 0);
+                        
+                        return (
+                          <TableRow key={v.id} className="group hover:bg-secondary/40">
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                {v.photo_url ? (
+                                  <img src={v.photo_url} alt="Veículo" className="h-12 w-12 rounded-full object-cover border border-border" />
+                                ) : (
+                                  <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center border border-border">
+                                    <Car className="h-5 w-5 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-sm">{v.brand} {v.model}</span>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                    {v.year && <span>{v.year}</span>}
+                                    {v.year && v.color && <span>•</span>}
+                                    {v.color && <span>{v.color}</span>}
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {v.plate ? (
+                                <span className="inline-block rounded border border-border bg-muted/50 px-2.5 py-1 font-mono text-xs tracking-widest font-semibold">
+                                  {v.plate}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-sm font-medium">{v.clients?.name ?? "—"}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span className="text-sm">
+                                {v.mileage ? `${v.mileage.toLocaleString("pt-BR")} km` : "—"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="font-semibold tabular-nums text-sm">
+                                {formatBRL(spent)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(v)}>
+                                    <Edit2 className="h-4 w-4 mr-2" /> Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => { if (confirm("Excluir veículo?")) delMut.mutate(v.id); }}>
+                                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </Card>
           </div>
 
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingId(null); }}>
             <DialogContent className="max-w-md w-full">
-              <DialogHeader><DialogTitle>Cadastrar veículo</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label>Cliente *</Label>
+              <DialogHeader><DialogTitle>{editingId ? "Editar Veículo" : "Cadastrar Veículo"}</DialogTitle></DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label>Cliente Proprietário *</Label>
                   <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className="bg-secondary/20"><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
                     <SelectContent>
                       {clients?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+                
+                <div className="space-y-2">
+                  <Label>Foto do Veículo (Opcional)</Label>
+                  <ImageUpload 
+                    bucket="workshop_media" 
+                    folder="vehicles"
+                    value={form.photo_url} 
+                    onChange={(url) => setForm({ ...form, photo_url: url })}
+                    className="w-full h-32"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label>Marca *</Label>
-                    <Input list="brands" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Honda" />
+                    <Input list="brands" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Ex: Honda" className="bg-secondary/20" />
                     <datalist id="brands">
                       {brands.map(b => <option key={b} value={b} />)}
                     </datalist>
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label>Modelo *</Label>
-                    <Input list="models" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="Civic" />
+                    <Input list="models" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="Ex: Civic" className="bg-secondary/20" />
                     <datalist id="models">
                       {models.map(m => <option key={m} value={m} />)}
                     </datalist>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div><Label>Ano</Label><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} /></div>
-                  <div><Label>Placa</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: formatPlate(e.target.value) })} placeholder="ABC-1D23" /></div>
-                  <div><Label>Cor</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2"><Label>Ano</Label><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} className="bg-secondary/20" /></div>
+                  <div className="space-y-2"><Label>Placa</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: formatPlate(e.target.value) })} placeholder="ABC-1D23" className="bg-secondary/20" /></div>
+                  <div className="space-y-2"><Label>Cor</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="Preto" className="bg-secondary/20" /></div>
                 </div>
-                <div><Label>Quilometragem</Label><Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} /></div>
+                <div className="space-y-2">
+                  <Label>Quilometragem Inicial (km)</Label>
+                  <Input type="number" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: e.target.value })} placeholder="50000" className="bg-secondary/20" />
+                </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                <Button variant="hero" onClick={() => createMut.mutate()}
-                  disabled={!form.client_id || !form.brand || !form.model || createMut.isPending}>
-                  {createMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cadastrar"}
+              <DialogFooter className="mt-6">
+                <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button variant="hero" onClick={() => upsertMut.mutate()}
+                  disabled={!form.client_id || !form.brand || !form.model || upsertMut.isPending} className="px-8">
+                  {upsertMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingId ? "Salvar Alterações" : "Salvar Veículo")}
                 </Button>
               </DialogFooter>
             </DialogContent>

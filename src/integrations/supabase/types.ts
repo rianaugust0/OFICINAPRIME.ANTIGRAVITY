@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -167,6 +167,120 @@ export type Database = {
           },
         ]
       }
+      inventory: {
+        Row: {
+          brand: string | null
+          category: string | null
+          cost_price: number
+          created_at: string | null
+          current_stock: number
+          id: string
+          location: string | null
+          min_stock: number
+          name: string
+          sale_price: number
+          sku: string | null
+          supplier_name: string | null
+          updated_at: string | null
+          workshop_id: string
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          cost_price?: number
+          created_at?: string | null
+          current_stock?: number
+          id?: string
+          location?: string | null
+          min_stock?: number
+          name: string
+          sale_price?: number
+          sku?: string | null
+          supplier_name?: string | null
+          updated_at?: string | null
+          workshop_id: string
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          cost_price?: number
+          created_at?: string | null
+          current_stock?: number
+          id?: string
+          location?: string | null
+          min_stock?: number
+          name?: string
+          sale_price?: number
+          sku?: string | null
+          supplier_name?: string | null
+          updated_at?: string | null
+          workshop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          inventory_id: string
+          notes: string | null
+          order_id: string | null
+          quantity: number
+          type: string
+          workshop_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inventory_id: string
+          notes?: string | null
+          order_id?: string | null
+          quantity: number
+          type: string
+          workshop_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inventory_id?: string
+          notes?: string | null
+          order_id?: string | null
+          quantity?: number
+          type?: string
+          workshop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           amount: number
@@ -181,6 +295,9 @@ export type Database = {
           parts_used: string | null
           reported_problem: string | null
           service_done: string | null
+                    payment_method: string | null
+          payment_condition: string | null
+          warranty_text: string | null
           status: Database["public"]["Enums"]["order_status"]
           updated_at: string
           vehicle_id: string
@@ -270,6 +387,161 @@ export type Database = {
         }
         Relationships: []
       }
+      quotes: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          id: string
+          notes: string | null
+                    payment_method: string | null
+          payment_condition: string | null
+          warranty_text: string | null
+          status: Database["public"]["Enums"]["quote_status"]
+          updated_at: string
+          vehicle_id: string | null
+          workshop_id: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+          workshop_id: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+          workshop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      suppliers: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          document: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          workshop_id: string
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          workshop_id: string
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          workshop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      automation_rules: {
+        Row: {
+          id: string
+          workshop_id: string
+          name: string
+          type: Database["public"]["Enums"]["automation_rule_type"]
+          trigger_condition: string
+          message_template: string
+          is_active: boolean
+          sent_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workshop_id: string
+          name: string
+          type: Database["public"]["Enums"]["automation_rule_type"]
+          trigger_condition: string
+          message_template: string
+          is_active?: boolean
+          sent_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workshop_id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["automation_rule_type"]
+          trigger_condition?: string
+          message_template?: string
+          is_active?: boolean
+          sent_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       vehicles: {
         Row: {
           brand: string
@@ -280,6 +552,10 @@ export type Database = {
           mileage: number | null
           model: string
           plate: string | null
+          renavam: string | null
+          chassi: string | null
+          engine: string | null
+          fuel_type: string | null
           updated_at: string
           workshop_id: string
           year: number | null
@@ -293,6 +569,10 @@ export type Database = {
           mileage?: number | null
           model: string
           plate?: string | null
+          renavam?: string | null
+          chassi?: string | null
+          engine?: string | null
+          fuel_type?: string | null
           updated_at?: string
           workshop_id: string
           year?: number | null
@@ -306,6 +586,10 @@ export type Database = {
           mileage?: number | null
           model?: string
           plate?: string | null
+          renavam?: string | null
+          chassi?: string | null
+          engine?: string | null
+          fuel_type?: string | null
           updated_at?: string
           workshop_id?: string
           year?: number | null
@@ -393,6 +677,88 @@ export type Database = {
             referencedRelation: "workshops"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_type: Database["public"]["Enums"]["item_type"]
+          name: string
+          order_id: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_type?: Database["public"]["Enums"]["item_type"]
+          name: string
+          order_id: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_type?: Database["public"]["Enums"]["item_type"]
+          name?: string
+          order_id?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      quote_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_type: Database["public"]["Enums"]["item_type"]
+          name: string
+          quantity: number
+          quote_id: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_type?: Database["public"]["Enums"]["item_type"]
+          name: string
+          quantity?: number
+          quote_id: string
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_type?: Database["public"]["Enums"]["item_type"]
+          name?: string
+          quantity?: number
+          quote_id?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          }
         ]
       }
       workshops: {
@@ -500,7 +866,10 @@ export type Database = {
         | "whatsapp_custom"
       automation_status: "pending" | "processing" | "sent" | "failed" | "dlq"
       order_status: "recebido" | "em_analise" | "aguardando_aprovacao" | "em_manutencao" | "pronto" | "entregue"
+      quote_status: "novo" | "contato_feito" | "analise" | "aprovado" | "recusado"
+      automation_rule_type: "service_reminder" | "birthday" | "feedback" | "payment"
       subscription_plan: "essencial" | "profissional" | "premium"
+      item_type: "peca" | "servico"
       workshop_role: "dono" | "mecanico" | "atendente"
     }
     CompositeTypes: {
@@ -638,8 +1007,11 @@ export const Constants = {
       ],
       automation_status: ["pending", "processing", "sent", "failed", "dlq"],
       order_status: ["recebido", "em_analise", "aguardando_aprovacao", "em_manutencao", "pronto", "entregue"],
+      quote_status: ["novo", "contato_feito", "analise", "aprovado", "recusado"],
+      automation_rule_type: ["service_reminder", "birthday", "feedback", "payment"],
       subscription_plan: ["essencial", "profissional", "premium"],
       workshop_role: ["dono", "mecanico", "atendente"],
     },
   },
 } as const
+

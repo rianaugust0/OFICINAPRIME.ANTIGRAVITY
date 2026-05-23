@@ -304,14 +304,7 @@ const Dashboard = () => {
                               ? "em_manutencao"
                               : (orderStatus as Status);
 
-                        console.log("STATUS:", o.status);
-                        console.log("NORMALIZED:", normalizedStatus);
-
-                        const s = {
-                          label: "Teste",
-                          className: "bg-red-500 text-white border-red-500",
-                          dot: "bg-red-500",
-                        };
+                        const s = statusMap[normalizedStatus] || statusMap["recebido"];
 
                         return (
                           <tr key={o.id} className="border-b border-border/60 transition-colors hover:bg-secondary/40 last:border-0">

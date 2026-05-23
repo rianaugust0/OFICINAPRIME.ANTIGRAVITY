@@ -14,15 +14,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const FIELDS = [
-  { key: "cliente_nome", label: "Nome do cliente", required: true },
+  { key: "cliente_nome", label: "Nome do cliente" },
   { key: "cliente_telefone", label: "Telefone" },
   { key: "veiculo_marca", label: "Marca" },
-  { key: "veiculo_modelo", label: "Modelo" },
+  { key: "veiculo_modelo", label: "Modelo (Seu 'CARRO')" },
   { key: "veiculo_placa", label: "Placa" },
   { key: "problema_relatado", label: "Problema relatado" },
   { key: "servico_realizado", label: "Serviço realizado" },
-  { key: "valor", label: "Valor" },
-  { key: "data", label: "Data (AAAA-MM-DD)" },
+  { key: "valor", label: "Valor / Recebimento" },
+  { key: "data", label: "Data" },
 ] as const;
 
 type FieldKey = (typeof FIELDS)[number]["key"];
@@ -34,11 +34,11 @@ function autoMap(headers: string[]): Record<FieldKey, string> {
     cliente_nome: ["clientenome", "nome", "cliente", "customer"],
     cliente_telefone: ["clientetelefone", "telefone", "celular", "phone", "fone"],
     veiculo_marca: ["veiculomarca", "marca", "brand"],
-    veiculo_modelo: ["veiculomodelo", "modelo", "model"],
+    veiculo_modelo: ["veiculomodelo", "modelo", "model", "carro", "veiculo"],
     veiculo_placa: ["veiculoplaca", "placa", "plate"],
     problema_relatado: ["problemarelatado", "problema", "reclamacao", "defeito"],
     servico_realizado: ["servicorealizado", "servico", "service", "descricao"],
-    valor: ["valor", "preco", "total", "amount"],
+    valor: ["valor", "preco", "total", "amount", "recebimento"],
     data: ["data", "datadeentrada", "entrada", "date"],
   };
   const out = {} as Record<FieldKey, string>;
@@ -65,7 +65,9 @@ export default function Import() {
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
-        const hdrs = res.meta.fields ?? [];
+        const rawHdrs = res.meta.fields ?? [];
+        // Filtra headers vazios que o Excel costuma exportar no final das colunas
+        const hdrs = Array.from(new Set(rawHdrs.filter(h => !!h && typeof h === 'string' && h.trim().length > 0)));
         setHeaders(hdrs);
         setRows(res.data);
         setMapping(autoMap(hdrs));
@@ -87,10 +89,9 @@ export default function Import() {
 
   const runImport = async () => {
     if (!workshopId) return;
-    if (!mapping.cliente_nome) {
-      toast.error("Mapeie ao menos a coluna 'Nome do cliente'.");
-      return;
-    }
+    
+    // We don't block if there is no client name anymore, we will auto-generate it.
+    
     setImporting(true);
     const errors: RowError[] = [];
     let success = 0;
@@ -106,19 +107,36 @@ export default function Import() {
       const row = rows[i];
       const lineNum = i + 2; // +2 for header row & 1-indexed
       try {
-        const name = get(row, "cliente_nome");
-        if (!name) { errors.push({ row: lineNum, reason: "Nome do cliente vazio" }); continue; }
-
-        const phone = get(row, "cliente_telefone") || null;
         const plateRaw = get(row, "veiculo_placa").toUpperCase();
         const plate = plateRaw || null;
+        
+        let name = get(row, "cliente_nome");
+        if (!name) { 
+           name = plate ? `Cliente da Placa ${plate}` : `Cliente Avulso (Importado)`;
+        }
+
+        const phone = get(row, "cliente_telefone") || null;
         const brand = get(row, "veiculo_marca") || "—";
         const model = get(row, "veiculo_modelo") || "—";
-        const valor = parseFloat(get(row, "valor").replace(",", ".")) || 0;
+        
+        // Handle R$ 100,00 -> 100.00
+        let valRaw = get(row, "valor").replace("R$", "").trim();
+        const valor = parseFloat(valRaw.replace(/\./g, "").replace(",", ".")) || 0;
+        
         const dateStr = get(row, "data");
-        const entryDate = dateStr ? new Date(dateStr).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
-        if (dateStr && isNaN(new Date(dateStr).getTime())) {
-          errors.push({ row: lineNum, reason: `Data inválida: ${dateStr}` }); continue;
+        // Handle DD/MM ou DD/MMM (ex: 17/jan)
+        let entryDate = new Date().toISOString().slice(0, 10);
+        if (dateStr) {
+           const parts = dateStr.split("/");
+           if (parts.length === 2) {
+              const day = parts[0].padStart(2, "0");
+              const months: Record<string, string> = { jan: "01", fev: "02", mar: "03", abr: "04", mai: "05", jun: "06", jul: "07", ago: "08", set: "09", out: "10", nov: "11", dez: "12" };
+              const month = months[parts[1].toLowerCase().trim()] || "01";
+              entryDate = `2022-${month}-${day}`; // Hardcoded to 2022 since it says TRABALHO 2022
+           } else if (parts.length === 3) {
+              // DD/MM/YYYY
+              entryDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+           }
         }
 
         // 1) Client (find by name+phone or create)
@@ -176,18 +194,33 @@ export default function Import() {
         if (dup) { errors.push({ row: lineNum, reason: "OS duplicada (mesmo veículo, data e valor)" }); continue; }
 
         // 4) Order
-        const { error: oErr } = await supabase.from("orders").insert({
+        const { data: createdOrder, error: oErr } = await supabase.from("orders").insert({
           workshop_id: workshopId,
           client_id: clientId!,
           vehicle_id: vehicleId!,
           reported_problem: get(row, "problema_relatado") || null,
-          service_done: get(row, "servico_realizado") || null,
           amount: valor,
           entry_date: entryDate,
           status: "entregue",
           paid: valor > 0,
-        });
+          paid_at: valor > 0 ? entryDate : null
+        }).select("id").single();
         if (oErr) throw oErr;
+        
+        // 5) Order Item
+        const servico = get(row, "servico_realizado");
+        if (servico || valor > 0) {
+           const { error: iErr } = await supabase.from("order_items").insert({
+              order_id: createdOrder.id,
+              name: servico || "Serviço Importado",
+              item_type: "servico",
+              unit_price: valor,
+              total_price: valor,
+              quantity: 1
+           });
+           if (iErr) throw iErr;
+        }
+        
         success++;
       } catch (e) {
         errors.push({ row: lineNum, reason: (e as Error).message });
@@ -250,7 +283,7 @@ export default function Import() {
                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">— Não mapear —</SelectItem>
-                          {headers.map((h) => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                          {headers.map((h, idx) => <SelectItem key={`${h}-${idx}`} value={h}>{h}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>

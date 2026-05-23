@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Users, Plus, Search, Phone, Car, Calendar, MessageCircle, Loader2, Trash2, DollarSign } from "lucide-react";
+import { Users, Plus, Search, Phone, MoreHorizontal, MessageCircle, Loader2, Trash2, Edit2, Car } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { openWhatsApp } from "@/lib/whatsapp";
@@ -17,6 +20,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageUpload } from "@/components/ImageUpload";
 
 interface ClientRow {
   id: string;
@@ -25,6 +29,7 @@ interface ClientRow {
   email: string | null;
   document: string | null;
   notes: string | null;
+  photo_url: string | null;
   last_service_at: string | null;
   vehicles: { count: number }[];
   orders: { amount: number; paid: boolean }[];
@@ -32,12 +37,17 @@ interface ClientRow {
 
 const formatBRL = (n: number) => Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+function getInitials(name: string) {
+  return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+}
+
 export default function Clients() {
   const { workshopId } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", document: "", notes: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", phone: "", email: "", document: "", notes: "", photo_url: "" as string | null });
 
   const { data, isLoading } = useQuery({
     queryKey: ["clients", workshopId],
@@ -45,7 +55,7 @@ export default function Clients() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, phone, email, document, notes, last_service_at, vehicles(count), orders(amount, paid)")
+        .select("id, name, phone, email, document, notes, photo_url, last_service_at, vehicles(count), orders(amount, paid)")
         .eq("workshop_id", workshopId!)
         .order("name");
       if (error) throw error;
@@ -53,23 +63,32 @@ export default function Clients() {
     },
   });
 
-  const createMut = useMutation({
+  const upsertMut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("clients").insert({
+      const payload = {
         workshop_id: workshopId!,
         name: form.name.trim(),
         phone: form.phone || null,
         email: form.email || null,
         document: form.document || null,
         notes: form.notes || null,
-      });
-      if (error) throw error;
+        photo_url: form.photo_url || null,
+      };
+      
+      if (editingId) {
+        const { error } = await supabase.from("clients").update(payload).eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("clients").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Cliente cadastrado!");
+      toast.success(editingId ? "Cliente atualizado!" : "Cliente cadastrado!");
       qc.invalidateQueries({ queryKey: ["clients"] });
       setOpen(false);
-      setForm({ name: "", phone: "", email: "", document: "", notes: "" });
+      setEditingId(null);
+      setForm({ name: "", phone: "", email: "", document: "", notes: "", photo_url: null });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -86,6 +105,25 @@ export default function Clients() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const openEdit = (c: any) => {
+    setEditingId(c.id);
+    setForm({
+      name: c.name || "",
+      phone: c.phone || "",
+      email: c.email || "",
+      document: c.document || "",
+      notes: c.notes || "",
+      photo_url: c.photo_url || null,
+    });
+    setOpen(true);
+  };
+
+  const openNew = () => {
+    setEditingId(null);
+    setForm({ name: "", phone: "", email: "", document: "", notes: "", photo_url: null });
+    setOpen(true);
+  };
+
   const filtered = (data ?? []).filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -94,120 +132,197 @@ export default function Clients() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-secondary/30">
         <AppSidebar />
         <main className="flex-1 overflow-x-hidden flex flex-col">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-6">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex flex-1 items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
                 <h1 className="font-display text-lg font-semibold tracking-tight">Clientes</h1>
               </div>
-              <Button variant="hero" size="sm" className="gap-2" onClick={() => setOpen(true)}>
+              <Button variant="hero" size="sm" className="gap-2" onClick={openNew}>
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Novo Cliente</span>
               </Button>
             </div>
           </header>
 
-          <div className="space-y-4 p-4 md:p-6 flex-1 overflow-y-auto">
-            <div className="relative max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por nome ou telefone…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <div className="space-y-6 p-4 md:p-8 flex-1 overflow-y-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Base de Clientes</h2>
+                <p className="text-sm text-muted-foreground">Gerencie todos os clientes da sua oficina.</p>
+              </div>
+              <div className="relative w-full sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar cliente..." 
+                  value={search} 
+                  onChange={(e) => setSearch(e.target.value)} 
+                  className="pl-10 bg-background" 
+                />
+              </div>
             </div>
 
-            {isLoading ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({length: 6}).map((_, i) => <Skeleton key={i} className="h-44 w-full rounded-xl" />)}
-              </div>
-            ) : filtered.length === 0 ? (
-              <Card className="flex flex-col items-center justify-center border-dashed border-border/60 px-6 py-16 text-center shadow-sm">
-                <Users className="h-8 w-8 text-muted-foreground" />
-                <p className="mt-4 font-medium">{search ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}</p>
-                <p className="mt-1 text-sm text-muted-foreground">Comece adicionando seu primeiro cliente.</p>
-                <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="mt-5 gap-2">
-                  <Plus className="h-4 w-4" /> Novo Cliente
-                </Button>
-              </Card>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {filtered.map((c) => {
-                  const spent = (c.orders || []).filter(o => o.paid).reduce((s, o) => s + Number(o.amount || 0), 0);
-                  
-                  return (
-                    <Card key={c.id} className="group border-border/60 p-5 transition-all hover:border-primary/40 hover:shadow-md">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-display text-base font-bold">{c.name}</p>
-                          {c.phone && <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"><Phone className="h-3.5 w-3.5" /> {c.phone}</p>}
-                        </div>
-                        <button onClick={() => { if (confirm("Excluir cliente?")) delMut.mutate(c.id); }} className="text-muted-foreground opacity-0 transition hover:text-destructive group-hover:opacity-100" aria-label="Excluir">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      
-                      <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/60 pt-4 text-xs">
-                        <div>
-                          <p className="text-muted-foreground mb-1 flex items-center gap-1"><Car className="h-3 w-3" /> Veículos</p>
-                          <p className="font-semibold">{c.vehicles?.[0]?.count ?? 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground mb-1 flex items-center gap-1"><Calendar className="h-3 w-3" /> Última Visita</p>
-                          <p className="font-semibold">{c.last_service_at ? format(new Date(c.last_service_at), "dd/MM/yy", { locale: ptBR }) : "—"}</p>
-                        </div>
-                        <div className="col-span-2 mt-2 bg-muted/50 p-2 rounded-md flex items-center justify-between">
-                          <span className="text-muted-foreground flex items-center gap-1"><DollarSign className="h-3 w-3" /> Total Gasto</span>
-                          <span className="font-display font-bold text-foreground">{formatBRL(spent)}</span>
-                        </div>
-                      </div>
-
-                      {c.phone && (
-                        <Button variant="hero" size="sm" className="mt-4 w-full gap-2"
-                          onClick={() => openWhatsApp(c.phone, `Olá ${c.name}!`)}>
-                          <MessageCircle className="h-4 w-4" /> WhatsApp
-                        </Button>
-                      )}
-                    </Card>
-                  )
-                })}
-              </div>
-            )}
+            <Card className="border-border/60 shadow-sm overflow-hidden bg-background">
+              {isLoading ? (
+                <div className="p-8 space-y-4">
+                  {Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                    <Users className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Nenhum cliente encontrado</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                    {search ? "Tente buscar com outros termos." : "Sua base de clientes está vazia. Cadastre o primeiro cliente para começar."}
+                  </p>
+                  {!search && (
+                    <Button onClick={openNew} variant="outline" className="mt-6 gap-2">
+                      <Plus className="h-4 w-4" /> Cadastrar Cliente
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-secondary/40">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-[300px]">Cliente</TableHead>
+                        <TableHead>Contato</TableHead>
+                        <TableHead className="text-center">Veículos</TableHead>
+                        <TableHead>Última Visita</TableHead>
+                        <TableHead className="text-right">Total Gasto</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((c) => {
+                        const spent = (c.orders || []).filter(o => o.paid).reduce((s, o) => s + Number(o.amount || 0), 0);
+                        const vehiclesCount = c.vehicles?.[0]?.count ?? 0;
+                        
+                        return (
+                          <TableRow key={c.id} className="group hover:bg-secondary/40">
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                {c.photo_url ? (
+                                  <img src={c.photo_url} alt="Cliente" className="h-12 w-12 rounded-full object-cover border border-border/50" />
+                                ) : (
+                                  <Avatar className="h-12 w-12 border border-border/50">
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                                      {getInitials(c.name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                )}
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-sm">{c.name}</span>
+                                  {c.email && <span className="text-xs text-muted-foreground">{c.email}</span>}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {c.phone ? (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span className="text-sm">{c.phone}</span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="inline-flex items-center justify-center gap-1.5 bg-secondary px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                <Car className="h-3 w-3 text-muted-foreground" /> {vehiclesCount}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">
+                                {c.last_service_at ? format(new Date(c.last_service_at), "dd/MM/yyyy", { locale: ptBR }) : "Nunca"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="font-semibold tabular-nums text-sm">
+                                {formatBRL(spent)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  {c.phone && (
+                                    <DropdownMenuItem onClick={() => openWhatsApp(c.phone!, `Olá ${c.name}!`)}>
+                                      <MessageCircle className="h-4 w-4 mr-2 text-green-500" /> WhatsApp
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(c)}>
+                                    <Edit2 className="h-4 w-4 mr-2" /> Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => { if (confirm("Excluir cliente e todo o seu histórico?")) delMut.mutate(c.id); }}>
+                                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </Card>
           </div>
 
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-md w-full">
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingId(null); }}>
+            <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Novo cliente</DialogTitle>
+                <DialogTitle>{editingId ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label>Nome *</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" />
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2 flex flex-col items-center justify-center mb-4">
+                  <ImageUpload 
+                    bucket="workshop_media" 
+                    folder="clients"
+                    value={form.photo_url} 
+                    onChange={(url) => setForm({ ...form, photo_url: url })}
+                    className="w-24 h-24 rounded-full"
+                  />
+                  <span className="text-xs text-muted-foreground">Foto do Perfil (Opcional)</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Telefone</Label>
-                    <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} placeholder="(11) 99999-0000" />
+                <div className="space-y-2">
+                  <Label>Nome Completo *</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="João da Silva" className="bg-secondary/20" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telefone (WhatsApp)</Label>
+                    <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} placeholder="(11) 99999-0000" className="bg-secondary/20" />
                   </div>
-                  <div>
-                    <Label>CPF/CNPJ</Label>
-                    <Input value={form.document} onChange={(e) => setForm({ ...form, document: formatDocument(e.target.value) })} placeholder="000.000.000-00" />
+                  <div className="space-y-2">
+                    <Label>CPF / CNPJ</Label>
+                    <Input value={form.document} onChange={(e) => setForm({ ...form, document: formatDocument(e.target.value) })} placeholder="000.000.000-00" className="bg-secondary/20" />
                   </div>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>E-mail</Label>
-                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" />
+                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="joao@exemplo.com" className="bg-secondary/20" />
                 </div>
-                <div>
-                  <Label>Observações</Label>
-                  <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} placeholder="Detalhes adicionais..." />
+                <div className="space-y-2">
+                  <Label>Observações Internas</Label>
+                  <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} placeholder="Cliente VIP, prefere contato por WhatsApp..." className="bg-secondary/20 resize-none" />
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                <Button variant="hero" onClick={() => createMut.mutate()} disabled={!form.name.trim() || createMut.isPending}>
-                  {createMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cadastrar"}
+              <DialogFooter className="mt-6">
+                <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button variant="hero" onClick={() => upsertMut.mutate()} disabled={!form.name.trim() || upsertMut.isPending} className="px-8">
+                  {upsertMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingId ? "Salvar Alterações" : "Salvar Cliente")}
                 </Button>
               </DialogFooter>
             </DialogContent>

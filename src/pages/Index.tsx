@@ -17,20 +17,10 @@ const features = [
 
 const plans = [
   {
-    name: "Essencial", price: "97", featured: false,
-    desc: "Para oficinas começando a se organizar.",
-    features: ["Até 100 OS/mês", "1 usuário", "Clientes e veículos ilimitados", "WhatsApp manual", "Suporte por e-mail"],
-  },
-  {
-    name: "Profissional", price: "197", featured: true,
-    desc: "Para oficinas que querem crescer.",
-    features: ["OS ilimitadas", "Até 5 usuários", "Agenda completa", "Relatórios financeiros", "Notificações automáticas", "Suporte prioritário"],
-  },
-  {
-    name: "Premium", price: "397", featured: false,
-    desc: "Para oficinas com várias unidades.",
-    features: ["Tudo do Profissional", "Usuários ilimitados", "Multi-unidades", "API e integrações", "Gerente de conta", "Onboarding dedicado"],
-  },
+    name: "Licença Única", price: "347", featured: true,
+    desc: "Acesso completo e irrestrito ao OficinaPrime.",
+    features: ["OS ilimitadas", "Usuários ilimitados", "Estoque inteligente", "WhatsApp automatizado", "Relatórios financeiros", "Suporte prioritário"],
+  }
 ];
 
 const testimonials = [
@@ -165,9 +155,9 @@ const Index = () => {
             <p className="mt-4 text-lg text-muted-foreground">14 dias grátis em qualquer plano. Cancele quando quiser.</p>
           </div>
 
-          <div className="mt-16 grid gap-6 lg:grid-cols-3">
+          <div className="mt-16 flex justify-center">
             {plans.map((p) => (
-              <div key={p.name} className={`relative flex flex-col rounded-3xl border p-8 ${p.featured ? "border-primary bg-card shadow-elevated lg:scale-105" : "border-border bg-card"}`}>
+              <div key={p.name} className={`relative w-full max-w-md flex flex-col rounded-3xl border p-8 ${p.featured ? "border-primary bg-card shadow-elevated lg:scale-105" : "border-border bg-card"}`}>
                 {p.featured && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">
                     MAIS POPULAR

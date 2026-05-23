@@ -133,8 +133,8 @@ export default function Financial() {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background print-container">
         <AppSidebar />
-        <main className="flex-1 overflow-x-hidden flex flex-col">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6 hide-print">
+        <main className="flex-1 overflow-x-hidden flex flex-col h-screen">
+          <header className="shrink-0 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-6 z-10">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex flex-1 items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -160,8 +160,6 @@ export default function Financial() {
           </header>
 
           <div className="space-y-6 p-4 md:p-6 flex-1 overflow-y-auto">
-            
-            {/* Cabeçalho para impressão apenas */}
             <div className="hidden print-header mb-6">
               <h1 className="text-2xl font-bold font-display">Relatório Financeiro</h1>
               <p className="text-muted-foreground text-sm">Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
