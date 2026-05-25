@@ -53,6 +53,10 @@ const nextStatus = (s: Status): Status | null => {
   const idx = statusOrder.indexOf(s);
   return idx < statusOrder.length - 1 ? statusOrder[idx + 1] : null;
 };
+const prevStatus = (s: Status): Status | null => {
+  const idx = statusOrder.indexOf(s);
+  return idx > 0 ? statusOrder[idx - 1] : null;
+};
 
 const formatBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -421,6 +425,7 @@ export default function Orders() {
                           const normalizedStatus: Status = (rawStatus === "recebido" || rawStatus === "em_analise" || rawStatus === "aguardando_aprovacao") ? "aguardando" : (rawStatus === "em_andamento" ? "em_manutencao" : rawStatus as Status);
                           const cfg = statusConfig[normalizedStatus] || statusConfig.aguardando;
                           const next = nextStatus(normalizedStatus);
+                          const prev = prevStatus(normalizedStatus);
                           
                           return (
                             <TableRow key={o.id} className="group hover:bg-secondary/40 transition-colors">
@@ -516,6 +521,15 @@ export default function Orders() {
                                       <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={() => { if (confirm("Excluir OS permanentemente?")) delMut.mutate(o.id); }}>
                                         <Trash2 className="h-4 w-4 mr-2" /> Excluir OS
                                       </DropdownMenuItem>
+                                      
+                                      {prev && (
+                                        <>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem className="text-muted-foreground cursor-pointer" onClick={() => { if (confirm(`Reverter o status para "${statusConfig[prev].label}"?`)) updateStatusMut.mutate({ order: o, status: prev }); }}>
+                                            ⏪ Reverter Status ({statusConfig[prev].label})
+                                          </DropdownMenuItem>
+                                        </>
+                                      )}
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </div>
