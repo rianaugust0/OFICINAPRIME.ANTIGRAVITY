@@ -133,57 +133,49 @@ export function AppSidebar() {
               </p>
             </div>
             
-            <Dialog>
-              <DialogTrigger asChild>
-                <button className="relative w-full overflow-hidden group bg-zinc-900 hover:bg-zinc-800 text-white font-medium py-4 rounded-xl transition-all active:scale-95 mb-4 text-base border border-amber-500/30 hover:border-amber-500/60 shadow-[0_0_20px_rgba(217,119,6,0.1)] hover:shadow-[0_0_30px_rgba(217,119,6,0.2)]">
-                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    Garantir Acesso Vitalício <span className="text-amber-500 font-semibold">(R$ 347)</span>
-                  </span>
-                </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Pagamento via PIX</DialogTitle>
-                  <DialogDescription>
-                    Transfira o valor exato para a chave abaixo e envie o comprovante para liberação do sistema.
-                  </DialogDescription>
-                </DialogHeader>
+            {showPix ? (
+              <div className="bg-zinc-900 border border-amber-500/30 rounded-2xl p-6 relative z-10 animate-in slide-in-from-bottom-4 duration-300">
+                <h3 className="text-white font-medium text-center mb-2">Pagamento via PIX</h3>
+                <p className="text-zinc-400 text-xs text-center mb-6">Transfira o valor exato para a chave abaixo e envie o comprovante.</p>
                 
-                <div className="space-y-4 py-4">
-                  <div className="flex flex-col items-center justify-center space-y-3 bg-secondary/50 p-4 rounded-xl border border-border">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-center">Valor: <span className="text-foreground font-black">R$ 347,00</span></p>
-                    <div className="bg-white p-2 rounded-xl shadow-sm">
-                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381")}`} alt="PIX QR Code" className="w-40 h-40" />
-                    </div>
-                    <p className="text-xs font-medium text-muted-foreground">Escaneie pelo app do banco</p>
+                <div className="flex flex-col items-center justify-center space-y-4 mb-6">
+                  <p className="text-sm font-medium text-amber-500 uppercase tracking-widest text-center">Valor: <span className="text-white font-black">R$ 347,00</span></p>
+                  <div className="bg-white p-3 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381")}`} alt="PIX QR Code" className="w-40 h-40" />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Ou use o PIX Copia e Cola</Label>
-                    <div className="flex gap-2">
-                      <Input readOnly value="00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381" className="font-mono text-[10px] bg-secondary/30 text-muted-foreground" />
-                      <button className="px-3 rounded-md border border-input hover:bg-accent text-sm font-medium" onClick={() => {
-                        navigator.clipboard.writeText("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381");
-                        toast.success("Código PIX copiado!");
-                      }}>Copiar</button>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4 space-y-3">
-                    <p className="text-xs text-muted-foreground text-center">
-                      Após o pagamento, clique no botão abaixo para enviar o comprovante no WhatsApp do suporte. Sua licença será ativada em poucos minutos.
-                    </p>
-                    <button 
-                      className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white gap-2 font-bold rounded-md py-2" 
-                      onClick={() => window.open('https://wa.me/5562985658094?text=Olá! Acabei de fazer o PIX da minha Licença Vitalícia da OficinaPrime. Segue o comprovante:', '_blank')}
-                    >
-                      Enviar Comprovante no WhatsApp
-                    </button>
+                  <p className="text-xs font-medium text-zinc-500">Escaneie pelo app do banco</p>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <Label className="text-zinc-400">Ou use o PIX Copia e Cola</Label>
+                  <div className="flex gap-2">
+                    <Input readOnly value="00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381" className="font-mono text-[10px] bg-black/50 text-zinc-300 border-zinc-800" />
+                    <button className="px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-black font-semibold text-sm transition-colors" onClick={() => {
+                      navigator.clipboard.writeText("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381");
+                      toast.success("Código PIX copiado!");
+                    }}>Copiar</button>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+                
+                <p className="text-[10px] text-zinc-500 text-center mt-4 mb-4">
+                  Após o pagamento, envie o comprovante para o suporte para liberação imediata.
+                </p>
+
+                <a href="https://wa.me/5562985658094?text=Olá! Acabei de fazer o PIX da minha Licença Vitalícia da OficinaPrime. Segue o comprovante:" target="_blank" rel="noopener noreferrer" className="relative w-full overflow-hidden group bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl transition-all active:scale-95 text-sm border border-emerald-400/30 hover:border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center gap-2">
+                  Enviar Comprovante via WhatsApp
+                </a>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowPix(true)}
+                className="relative w-full overflow-hidden group bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-4 rounded-xl transition-all active:scale-95 mb-4 text-base border border-emerald-400/30 hover:border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]"
+              >
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500/10 via-emerald-400/30 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  Garantir Acesso Vitalício <span className="text-emerald-100 font-semibold">(R$ 347)</span>
+                </span>
+              </button>
+            )}
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Liberação Imediata Pós-Pagamento</p>
          </div>
       </div>
