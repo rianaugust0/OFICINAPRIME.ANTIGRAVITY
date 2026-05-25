@@ -209,23 +209,49 @@ export default function Orders() {
   });
 
   const updateStatusMut = useMutation({
-    mutationFn: async ({ id, status, clientId }: { id: string; status: Status; clientId: string }) => {
+    mutationFn: async ({ order, status }: { order: any; status: Status }) => {
       const updates: { status: Status } = { status };
-      if (status === "entregue") {
-        await supabase.from("clients").update({ last_service_at: new Date().toISOString() }).eq("id", clientId);
+      if (status === "entregue" && order.client_id) {
+        await supabase.from("clients").update({ last_service_at: new Date().toISOString() }).eq("id", order.client_id);
       }
-      const { error } = await supabase.from("orders").update(updates as any).eq("id", id);
+      const { error } = await supabase.from("orders").update(updates as any).eq("id", order.id);
       if (error) throw error;
       
       if (status === "pronto" || status === "entregue") {
-         await checkAndDeductInventory(id);
+         await checkAndDeductInventory(order.id);
       }
+      return { order, status };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["clients"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats-full"] });
-      toast.success("Status atualizado.");
+      
+      const { order, status } = data;
+      const clientName = order.clients?.name || "Cliente";
+      const clientPhone = order.clients?.phone;
+      const vehicleStr = `${order.vehicles?.brand || ''} ${order.vehicles?.model || ''}`.trim() || "veículo";
+      const plateStr = order.vehicles?.plate || "S/ Placa";
+
+      if (status === "pronto" && clientPhone) {
+        toast.success(`Veículo pronto! Avisar ${clientName}?`, {
+          duration: 10000,
+          action: {
+            label: "Avisar no WhatsApp",
+            onClick: () => openWhatsApp(clientPhone, WhatsAppTemplates.orderReady(clientName, vehicleStr, plateStr))
+          }
+        });
+      } else if (status === "em_manutencao" && clientPhone) {
+        toast.success(`Serviço iniciado! Avisar ${clientName}?`, {
+          duration: 10000,
+          action: {
+            label: "Avisar no WhatsApp",
+            onClick: () => openWhatsApp(clientPhone, WhatsAppTemplates.budgetApproved(clientName))
+          }
+        });
+      } else {
+        toast.success("Status atualizado.");
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -411,7 +437,7 @@ export default function Orders() {
                                 </div>
                                 {next && (
                                   <div className="mt-2">
-                                    <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 py-0 border-primary/20 hover:border-primary/50 text-muted-foreground hover:text-foreground" onClick={() => updateStatusMut.mutate({ id: o.id, status: next, clientId: o.client_id })}>
+                                    <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 py-0 border-primary/20 hover:border-primary/50 text-muted-foreground hover:text-foreground" onClick={() => updateStatusMut.mutate({ order: o, status: next })}>
                                       Mover p/ {statusConfig[next].label} <ArrowRight className="h-3 w-3 ml-1" />
                                     </Button>
                                   </div>
