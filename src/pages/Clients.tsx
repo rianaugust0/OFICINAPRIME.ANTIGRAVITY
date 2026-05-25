@@ -31,6 +31,7 @@ interface ClientRow {
   notes: string | null;
   photo_url: string | null;
   last_service_at: string | null;
+  is_deleted: boolean;
   vehicles: { count: number }[];
   orders: { amount: number; paid: boolean }[];
 }
@@ -45,18 +46,20 @@ export default function Clients() {
   const { workshopId } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", document: "", notes: "", photo_url: "" as string | null });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["clients", workshopId],
+    queryKey: ["clients", workshopId, showArchived],
     enabled: !!workshopId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, phone, email, document, notes, photo_url, last_service_at, vehicles(count), orders(amount, paid)")
+        .select("id, name, phone, email, document, notes, photo_url, last_service_at, is_deleted, vehicles(count), orders(amount, paid)")
         .eq("workshop_id", workshopId!)
+        .eq("is_deleted", showArchived)
         .order("name");
       if (error) throw error;
       return data as unknown as ClientRow[];
@@ -95,11 +98,23 @@ export default function Clients() {
 
   const delMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("clients").delete().eq("id", id);
+      const { error } = await supabase.from("clients").update({ is_deleted: true }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Cliente excluído.");
+      toast.success("Cliente arquivado com sucesso!");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const restoreMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("clients").update({ is_deleted: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cliente restaurado com sucesso!");
       qc.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -155,14 +170,23 @@ export default function Clients() {
                 <h2 className="text-2xl font-bold tracking-tight">Base de Clientes</h2>
                 <p className="text-sm text-muted-foreground">Gerencie todos os clientes da sua oficina.</p>
               </div>
-              <div className="relative w-full sm:w-72">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar cliente..." 
-                  value={search} 
-                  onChange={(e) => setSearch(e.target.value)} 
-                  className="pl-10 bg-background" 
-                />
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="relative w-full sm:w-72">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input 
+                    placeholder="Buscar cliente..." 
+                    value={search} 
+                    onChange={(e) => setSearch(e.target.value)} 
+                    className="pl-10 bg-background" 
+                  />
+                </div>
+                <Button 
+                  variant={showArchived ? "secondary" : "outline"} 
+                  className="w-full sm:w-auto gap-2"
+                  onClick={() => setShowArchived(!showArchived)}
+                >
+                  {showArchived ? "Ver Ativos" : "Ver Arquivados"}
+                </Button>
               </div>
             </div>
 
@@ -264,9 +288,15 @@ export default function Clients() {
                                   <DropdownMenuItem className="cursor-pointer" onClick={() => openEdit(c)}>
                                     <Edit2 className="h-4 w-4 mr-2" /> Editar
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => { if (confirm("Excluir cliente e todo o seu histórico?")) delMut.mutate(c.id); }}>
-                                    <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                                  </DropdownMenuItem>
+                                  {c.is_deleted ? (
+                                    <DropdownMenuItem className="cursor-pointer text-emerald-600 focus:text-emerald-700" onClick={() => { if (confirm("Restaurar este cliente para a lista ativa?")) restoreMut.mutate(c.id); }}>
+                                      <Trash2 className="h-4 w-4 mr-2" /> Restaurar
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={() => { if (confirm("Arquivar este cliente? Ele sumirá da lista atual.")) delMut.mutate(c.id); }}>
+                                      <Trash2 className="h-4 w-4 mr-2" /> Arquivar
+                                    </DropdownMenuItem>
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>

@@ -96,7 +96,7 @@ export default function Orders() {
     queryKey: ["clients-min", workshopId],
     enabled: !!workshopId,
     queryFn: async () => {
-      const { data } = await supabase.from("clients").select("id, name").eq("workshop_id", workshopId!).order("name");
+      const { data } = await supabase.from("clients").select("id, name").eq("workshop_id", workshopId!).eq("is_deleted", false).order("name");
       return data ?? [];
     },
   });

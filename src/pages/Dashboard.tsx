@@ -100,7 +100,7 @@ const Dashboard = () => {
 
       const [orders, clients] = await Promise.all([
         supabase.from("orders").select("id, status, amount, paid, paid_at, updated_at").eq("workshop_id", workshopId!),
-        supabase.from("clients").select("id", { count: "exact", head: true }).eq("workshop_id", workshopId!),
+        supabase.from("clients").select("id", { count: "exact", head: true }).eq("workshop_id", workshopId!).eq("is_deleted", false),
       ]);
 
       const allOrders = orders.data ?? [];
