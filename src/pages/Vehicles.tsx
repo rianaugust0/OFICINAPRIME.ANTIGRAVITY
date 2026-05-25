@@ -17,9 +17,6 @@ import { formatPlate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUpload } from "@/components/ImageUpload";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
 
 interface VehicleRow {
   id: string;
@@ -44,8 +41,6 @@ export default function Vehicles() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "", photo_url: "" as string | null });
-  const [brandOpen, setBrandOpen] = useState(false);
-  const [modelOpen, setModelOpen] = useState(false);
 
   const { data: vehicles, isLoading } = useQuery({
     queryKey: ["vehicles", workshopId],
@@ -71,56 +66,15 @@ export default function Vehicles() {
     },
   });
 
-  const { data: fipeBrands } = useQuery({
-    queryKey: ["fipe-brands"],
-    staleTime: Infinity,
-    queryFn: async () => {
-      try {
-        const res = await fetch("https://brasilapi.com.br/api/fipe/marcas/v1/carros");
-        if (!res.ok) return [];
-        return res.json();
-      } catch { return []; }
-    }
-  });
-
-  const selectedBrandCode = useMemo(() => {
-     if (!fipeBrands || !form.brand) return null;
-     const match = fipeBrands.find((b: any) => b.nome.toLowerCase() === form.brand.toLowerCase());
-     return match ? match.valor : null;
-  }, [fipeBrands, form.brand]);
-
-  const { data: fipeModels } = useQuery({
-    queryKey: ["fipe-models", selectedBrandCode],
-    enabled: !!selectedBrandCode,
-    staleTime: Infinity,
-    queryFn: async () => {
-      try {
-        const res = await fetch(`https://brasilapi.com.br/api/fipe/modelos/v1/carros/${selectedBrandCode}`);
-        if (!res.ok) return { modelos: [] };
-        return res.json();
-      } catch { return { modelos: [] }; }
-    }
-  });
-
   const { brands, models } = useMemo(() => {
     const b = new Set<string>();
     const m = new Set<string>();
-    
     vehicles?.forEach(v => {
       if (v.brand) b.add(v.brand);
       if (v.model) m.add(v.model);
     });
-
-    if (fipeBrands) {
-      fipeBrands.forEach((fb: any) => b.add(fb.nome));
-    }
-    
-    if (fipeModels?.modelos) {
-      fipeModels.modelos.forEach((fm: any) => m.add(fm.nome));
-    }
-
     return { brands: Array.from(b).sort(), models: Array.from(m).sort() };
-  }, [vehicles, fipeBrands, fipeModels]);
+  }, [vehicles]);
 
   const upsertMut = useMutation({
     mutationFn: async () => {
@@ -368,73 +322,19 @@ export default function Vehicles() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2 flex flex-col">
+                  <div className="space-y-2">
                     <Label>Marca *</Label>
-                    <Popover open={brandOpen} onOpenChange={setBrandOpen}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" aria-expanded={brandOpen} className="w-full justify-between bg-secondary/20">
-                          {form.brand || "Selecione a Marca..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar marca..." />
-                          <CommandList>
-                            <CommandEmpty>Nenhuma marca encontrada.</CommandEmpty>
-                            <CommandGroup>
-                              {brands.map((b) => (
-                                <CommandItem
-                                  key={b}
-                                  value={b}
-                                  onSelect={(currentValue) => {
-                                    setForm({ ...form, brand: currentValue === form.brand ? "" : currentValue, model: "" });
-                                    setBrandOpen(false);
-                                  }}
-                                >
-                                  <Check className={cn("mr-2 h-4 w-4", form.brand === b ? "opacity-100" : "opacity-0")} />
-                                  {b}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <Input list="brands" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Ex: Honda" className="bg-secondary/20" />
+                    <datalist id="brands">
+                      {brands.map(b => <option key={b} value={b} />)}
+                    </datalist>
                   </div>
-                  <div className="space-y-2 flex flex-col">
+                  <div className="space-y-2">
                     <Label>Modelo *</Label>
-                    <Popover open={modelOpen} onOpenChange={setModelOpen}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" aria-expanded={modelOpen} className="w-full justify-between bg-secondary/20" disabled={!form.brand}>
-                          {form.model || "Selecione o Modelo..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar modelo..." />
-                          <CommandList>
-                            <CommandEmpty>Nenhum modelo encontrado.</CommandEmpty>
-                            <CommandGroup>
-                              {models.map((m) => (
-                                <CommandItem
-                                  key={m}
-                                  value={m}
-                                  onSelect={(currentValue) => {
-                                    setForm({ ...form, model: currentValue === form.model ? "" : currentValue });
-                                    setModelOpen(false);
-                                  }}
-                                >
-                                  <Check className={cn("mr-2 h-4 w-4", form.model === m ? "opacity-100" : "opacity-0")} />
-                                  {m}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <Input list="models" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="Ex: Civic" className="bg-secondary/20" />
+                    <datalist id="models">
+                      {models.map(m => <option key={m} value={m} />)}
+                    </datalist>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
