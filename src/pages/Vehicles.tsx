@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Car, Plus, Search, Loader2, Trash2, User, DollarSign, MoreHorizontal, Edit2 } from "lucide-react";
+import { Car, Plus, Search, Loader2, Trash2, User, DollarSign, MoreHorizontal, Edit2, Check, ChevronsUpDown } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import { formatPlate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUpload } from "@/components/ImageUpload";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 interface VehicleRow {
   id: string;
@@ -41,6 +44,8 @@ export default function Vehicles() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "", photo_url: "" as string | null });
+  const [brandOpen, setBrandOpen] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
 
   const { data: vehicles, isLoading } = useQuery({
     queryKey: ["vehicles", workshopId],
@@ -363,19 +368,73 @@ export default function Vehicles() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex flex-col">
                     <Label>Marca *</Label>
-                    <Input list="brands" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Ex: Honda" className="bg-secondary/20" />
-                    <datalist id="brands">
-                      {brands.map(b => <option key={b} value={b} />)}
-                    </datalist>
+                    <Popover open={brandOpen} onOpenChange={setBrandOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" aria-expanded={brandOpen} className="w-full justify-between bg-secondary/20">
+                          {form.brand || "Selecione a Marca..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar marca..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhuma marca encontrada.</CommandEmpty>
+                            <CommandGroup>
+                              {brands.map((b) => (
+                                <CommandItem
+                                  key={b}
+                                  value={b}
+                                  onSelect={(currentValue) => {
+                                    setForm({ ...form, brand: currentValue === form.brand ? "" : currentValue, model: "" });
+                                    setBrandOpen(false);
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", form.brand === b ? "opacity-100" : "opacity-0")} />
+                                  {b}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex flex-col">
                     <Label>Modelo *</Label>
-                    <Input list="models" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="Ex: Civic" className="bg-secondary/20" />
-                    <datalist id="models">
-                      {models.map(m => <option key={m} value={m} />)}
-                    </datalist>
+                    <Popover open={modelOpen} onOpenChange={setModelOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" aria-expanded={modelOpen} className="w-full justify-between bg-secondary/20" disabled={!form.brand}>
+                          {form.model || "Selecione o Modelo..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar modelo..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhum modelo encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              {models.map((m) => (
+                                <CommandItem
+                                  key={m}
+                                  value={m}
+                                  onSelect={(currentValue) => {
+                                    setForm({ ...form, model: currentValue === form.model ? "" : currentValue });
+                                    setModelOpen(false);
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", form.model === m ? "opacity-100" : "opacity-0")} />
+                                  {m}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
