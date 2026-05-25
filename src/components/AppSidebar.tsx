@@ -113,19 +113,30 @@ export function AppSidebar() {
 
   if (isExpired) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-         <div className="bg-background rounded-3xl p-8 max-w-md w-full shadow-[0_0_40px_rgba(239,68,68,0.2)] text-center border border-red-500/20">
-            <div className="mx-auto w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-6">
-               <Lock className="w-10 h-10" />
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-700">
+         <div className="bg-zinc-950/80 backdrop-blur-3xl rounded-3xl p-8 max-w-lg w-full shadow-[0_0_80px_rgba(212,175,55,0.15)] border border-white/10 relative overflow-hidden z-10 animate-in zoom-in-95 duration-500">
+            {/* Elegant gradient mesh background */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent"></div>
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/20 rounded-full blur-[80px]"></div>
+            
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-500/20 to-amber-700/5 text-amber-500 rounded-2xl flex items-center justify-center mb-6 border border-amber-500/20 shadow-[0_0_30px_rgba(217,119,6,0.15)]">
+               <Lock className="w-10 h-10" strokeWidth={1.5} />
             </div>
-            <h2 className="text-2xl font-black text-foreground mb-3 tracking-tight">Tempo Esgotado</h2>
-            <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
-              Seus 30 dias de teste gratuito chegaram ao fim. Para restaurar seu acesso e não perder os dados da sua oficina, adquira a Licença Vitalícia agora.
-            </p>
+            
+            <div className="text-center mb-8 relative z-10">
+              <h2 className="text-3xl font-display font-semibold text-white mb-2 tracking-tight">Tempo Esgotado</h2>
+              <p className="text-zinc-400 text-sm leading-relaxed max-w-md mx-auto">
+                Seu período de experiência chegou ao fim. Para garantir que sua oficina continue operando sem interrupções e para preservar todos os seus dados e histórico, faça o upgrade para a <strong className="text-amber-500 font-medium">Licença Vitalícia</strong>.
+              </p>
+            </div>
+            
             <Dialog>
               <DialogTrigger asChild>
-                <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-transform active:scale-95 mb-4 text-base">
-                  Garantir Acesso Vitalício (R$ 347)
+                <button className="relative w-full overflow-hidden group bg-zinc-900 hover:bg-zinc-800 text-white font-medium py-4 rounded-xl transition-all active:scale-95 mb-4 text-base border border-amber-500/30 hover:border-amber-500/60 shadow-[0_0_20px_rgba(217,119,6,0.1)] hover:shadow-[0_0_30px_rgba(217,119,6,0.2)]">
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    Garantir Acesso Vitalício <span className="text-amber-500 font-semibold">(R$ 347)</span>
+                  </span>
                 </button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
