@@ -25,6 +25,11 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PrintLayout } from "@/components/PrintLayout";
 
+// Temporary stub for Phase 3
+const checkAndDeductInventory = async (orderId: string) => {
+  console.log("Inventory deduction triggered for", orderId, "- implementation pending");
+};
+
 type Status = "aguardando" | "em_manutencao" | "pronto" | "entregue";
 
 interface OrderItem {
