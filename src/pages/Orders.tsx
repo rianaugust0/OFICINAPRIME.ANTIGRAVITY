@@ -25,9 +25,59 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PrintLayout } from "@/components/PrintLayout";
 
-// Temporary stub for Phase 3
-const checkAndDeductInventory = async (orderId: string) => {
-  console.log("Inventory deduction triggered for", orderId, "- implementation pending");
+// Automação Invisível do Estoque (Phase 3)
+const checkAndDeductInventory = async (orderId: string, workshopId: string) => {
+  try {
+    const { data: existingTx } = await supabase
+      .from("inventory_transactions")
+      .select("id")
+      .eq("order_id", orderId)
+      .eq("type", "out")
+      .limit(1);
+      
+    if (existingTx && existingTx.length > 0) return; // Already deducted
+
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", orderId)
+      .eq("item_type", "peca");
+
+    if (!items || items.length === 0) return;
+
+    for (const item of items) {
+      const { data: invItems } = await supabase
+        .from("inventory")
+        .select("id, current_stock, name")
+        .eq("workshop_id", workshopId)
+        .ilike("name", item.name)
+        .limit(1);
+
+      if (invItems && invItems.length > 0) {
+        const invItem = invItems[0];
+        
+        await supabase
+          .from("inventory")
+          .update({ current_stock: invItem.current_stock - item.quantity })
+          .eq("id", invItem.id);
+
+        await supabase
+          .from("inventory_transactions")
+          .insert({
+            inventory_id: invItem.id,
+            workshop_id: workshopId,
+            order_id: orderId,
+            quantity: item.quantity,
+            type: "out",
+            notes: "Saída automática via OS"
+          });
+          
+        toast.success(`Estoque atualizado: -${item.quantity}x ${invItem.name}`);
+      }
+    }
+  } catch (error) {
+    console.error("Erro na automação de estoque:", error);
+  }
 };
 
 type Status = "aguardando" | "em_manutencao" | "pronto" | "entregue";
@@ -227,7 +277,7 @@ export default function Orders() {
       if (error) throw error;
       
       if (status === "pronto" || status === "entregue") {
-         await checkAndDeductInventory(order.id);
+         await checkAndDeductInventory(order.id, order.workshop_id);
       }
       return { order, status };
     },
