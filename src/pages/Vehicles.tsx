@@ -66,15 +66,56 @@ export default function Vehicles() {
     },
   });
 
+  const { data: fipeBrands } = useQuery({
+    queryKey: ["fipe-brands"],
+    staleTime: Infinity,
+    queryFn: async () => {
+      try {
+        const res = await fetch("https://brasilapi.com.br/api/fipe/marcas/v1/carros");
+        if (!res.ok) return [];
+        return res.json();
+      } catch { return []; }
+    }
+  });
+
+  const selectedBrandCode = useMemo(() => {
+     if (!fipeBrands || !form.brand) return null;
+     const match = fipeBrands.find((b: any) => b.nome.toLowerCase() === form.brand.toLowerCase());
+     return match ? match.valor : null;
+  }, [fipeBrands, form.brand]);
+
+  const { data: fipeModels } = useQuery({
+    queryKey: ["fipe-models", selectedBrandCode],
+    enabled: !!selectedBrandCode,
+    staleTime: Infinity,
+    queryFn: async () => {
+      try {
+        const res = await fetch(`https://brasilapi.com.br/api/fipe/modelos/v1/carros/${selectedBrandCode}`);
+        if (!res.ok) return { modelos: [] };
+        return res.json();
+      } catch { return { modelos: [] }; }
+    }
+  });
+
   const { brands, models } = useMemo(() => {
     const b = new Set<string>();
     const m = new Set<string>();
+    
     vehicles?.forEach(v => {
       if (v.brand) b.add(v.brand);
       if (v.model) m.add(v.model);
     });
-    return { brands: Array.from(b), models: Array.from(m) };
-  }, [vehicles]);
+
+    if (fipeBrands) {
+      fipeBrands.forEach((fb: any) => b.add(fb.nome));
+    }
+    
+    if (fipeModels?.modelos) {
+      fipeModels.modelos.forEach((fm: any) => m.add(fm.nome));
+    }
+
+    return { brands: Array.from(b).sort(), models: Array.from(m).sort() };
+  }, [vehicles, fipeBrands, fipeModels]);
 
   const upsertMut = useMutation({
     mutationFn: async () => {
