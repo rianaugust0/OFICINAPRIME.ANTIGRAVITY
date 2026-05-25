@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { differenceInDays, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -100,6 +101,8 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
   const { workshop } = useAuth();
+  const [showPix, setShowPix] = useState(false);
+  
   const isActive = (path: string) => pathname === path;
   const logoUrl = workshop?.workshops?.logo_url;
   const wsName = workshop?.workshops?.name;
