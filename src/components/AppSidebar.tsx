@@ -111,7 +111,7 @@ export function AppSidebar() {
   const trialEnd = addDays(createdAt, 30);
   const daysLeft = Math.max(0, differenceInDays(trialEnd, new Date()));
   // Constants for trial banner
-  const isTrial = workshop?.workshops?.plan !== "vitalicio";
+  const isTrial = workshop?.workshops?.plan !== "vitalicio" && workshop?.workshops?.plan !== "premium";
   const isExpired = isTrial && daysLeft <= 0;
 
   if (isExpired) {
