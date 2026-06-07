@@ -310,7 +310,7 @@ export default function Settings() {
                         <div className="inline-block bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 text-center">
                           <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Investimento Único</p>
                           <p className="text-5xl sm:text-6xl font-black text-white flex items-start justify-center md:justify-end gap-1">
-                            <span className="text-2xl font-bold text-slate-400 mt-1">R$</span>347
+                            <span className="text-2xl font-bold text-slate-400 mt-1">R$</span>150
                           </p>
                           {ws?.plan === 'vitalicio' ? (
                             <p className="text-emerald-400 text-sm font-semibold mt-3 flex items-center justify-center md:justify-end gap-1.5">
@@ -333,9 +333,9 @@ export default function Settings() {
                                 
                                 <div className="space-y-4 py-4">
                                   <div className="flex flex-col items-center justify-center space-y-3 bg-secondary/50 p-4 rounded-xl border border-border">
-                                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-center">Valor: <span className="text-foreground font-black">R$ 347,00</span></p>
+                                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-center">Valor: <span className="text-foreground font-black">R$ 150,00</span></p>
                                     <div className="bg-white p-2 rounded-xl shadow-sm">
-                                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381")}`} alt="PIX QR Code" className="w-40 h-40" />
+                                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406150.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963048500")}`} alt="PIX QR Code" className="w-40 h-40" />
                                     </div>
                                     <p className="text-xs font-medium text-muted-foreground">Escaneie pelo app do banco</p>
                                   </div>
@@ -343,9 +343,9 @@ export default function Settings() {
                                   <div className="space-y-2">
                                     <Label>Ou use o PIX Copia e Cola</Label>
                                     <div className="flex gap-2">
-                                      <Input readOnly value="00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381" className="font-mono text-[10px] bg-secondary/30 text-muted-foreground" />
+                                      <Input readOnly value="00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406150.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963048500" className="font-mono text-[10px] bg-secondary/30 text-muted-foreground" />
                                       <Button variant="outline" onClick={() => {
-                                        navigator.clipboard.writeText("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381");
+                                        navigator.clipboard.writeText("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406150.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963048500");
                                         toast.success("Código PIX copiado!");
                                       }}>Copiar</Button>
                                     </div>

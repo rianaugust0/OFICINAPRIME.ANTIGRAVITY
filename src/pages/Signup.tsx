@@ -63,22 +63,36 @@ const Signup = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-hero text-background">
-      <div className="absolute inset-0 grid-pattern opacity-50" />
-      <div className="absolute -left-32 top-1/4 h-[480px] w-[480px] rounded-full bg-primary/15 blur-[120px]" />
-      <div className="absolute -bottom-40 -right-20 h-[420px] w-[420px] rounded-full bg-primary/10 blur-[120px]" />
+    <div className="dark landing-theme relative min-h-screen overflow-hidden bg-background text-foreground">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          maskImage:
+            "radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-60"
+        style={{
+          background:
+            "radial-gradient(ellipse 800px 500px at 50% 0%, var(--gold-glow), transparent 70%)",
+        }}
+      />
 
       <header className="relative z-10">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-elevated shadow-sm">
               <Wrench className="h-5 w-5 text-primary" strokeWidth={2.5} />
             </div>
-            <span className="font-display text-lg font-bold tracking-tight">
+            <span className="font-display text-lg font-bold tracking-tight text-foreground">
               Oficina<span className="text-primary">Prime</span>
             </span>
           </Link>
-          <Link to="/login" className="text-sm text-background/60 hover:text-background transition-colors">
+          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Já tenho conta →
           </Link>
         </div>
@@ -86,13 +100,13 @@ const Signup = () => {
 
       <main className="relative z-10 flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-10">
         <div className="w-full max-w-md animate-fade-up">
-          <div className="rounded-3xl border border-background/10 bg-background/[0.04] p-8 shadow-elevated backdrop-blur-xl sm:p-10">
+          <div className="relative rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/60 backdrop-blur-xl sm:p-10">
             <div className="mb-8 text-center">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-glow">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-[0_0_40px_-6px_var(--gold-glow)]">
                 <Wrench className="h-7 w-7 text-primary-foreground" strokeWidth={2.5} />
               </div>
-              <h1 className="font-display text-3xl font-bold tracking-tight">{isInvited ? "Aceitar convite" : "Crie sua oficina"}</h1>
-              <p className="mt-2 text-sm text-background/60">{isInvited ? "Crie sua conta para entrar na equipe." : "Comece grátis. Configure em 1 minuto."}</p>
+              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">{isInvited ? "Aceitar convite" : "Crie sua oficina"}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{isInvited ? "Crie sua conta para entrar na equipe." : "Comece grátis. Configure em 1 minuto."}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,12 +130,12 @@ const Signup = () => {
                 <Input id="password" type="password" required value={form.password} onChange={set("password")} placeholder="••••••••" className={inputClass} />
               </Field>
 
-              <Button type="submit" variant="hero" size="lg" className="group mt-2 w-full" disabled={submitting}>
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Criar oficina <ArrowRight className="transition-transform group-hover:translate-x-1" /></>}
-              </Button>
+              <button type="submit" className="group mt-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3 text-base font-semibold text-primary-foreground shadow-[0_0_40px_-6px_var(--gold-glow)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_60px_-4px_var(--gold-glow)] disabled:opacity-50" disabled={submitting}>
+                {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Criar oficina <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></>}
+              </button>
             </form>
 
-            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-background/50">
+            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 text-primary" />
               <span>Sem cartão de crédito. Cancele quando quiser.</span>
             </div>
@@ -132,14 +146,14 @@ const Signup = () => {
   );
 };
 
-const inputClass = "h-11 border-background/10 bg-background/5 pl-10 text-background placeholder:text-background/30 focus-visible:border-primary/60 focus-visible:ring-primary/30";
+const inputClass = "h-12 border-white/10 bg-white/5 pl-11 text-foreground placeholder:text-muted-foreground/70 focus-visible:border-primary/60 focus-visible:ring-primary/30 backdrop-blur-sm";
 
 function Field({ icon: Icon, label, id, children }: { icon: typeof User; label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-background/80 text-xs">{label}</Label>
+      <Label htmlFor={id} className="text-foreground/80 text-xs">{label}</Label>
       <div className="relative">
-        <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-background/40" />
+        <Icon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         {children}
       </div>
     </div>
