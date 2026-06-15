@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PrintLayout } from "@/components/PrintLayout";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { User } from "lucide-react";
 
 // Automação Invisível do Estoque (Phase 3)
 const checkAndDeductInventory = async (orderId: string, workshopId: string) => {
@@ -619,34 +620,77 @@ export default function Orders() {
                 </Card>
               ) : (
                 <DragDropContext onDragEnd={onDragEnd}>
-                  <div className="flex gap-4 overflow-x-auto pb-4 h-full min-h-[500px]">
+                  <div className="flex gap-6 overflow-x-auto pb-6 h-full min-h-[600px] items-start px-2">
                     {statusOrder.map(status => {
                        const colOrders = (orders ?? []).filter(o => o.status === status);
                        return (
-                         <div key={status} className="flex-shrink-0 w-80 flex flex-col bg-secondary/30 rounded-xl border border-border/50">
-                           <div className="p-3 border-b border-border/50 flex justify-between items-center bg-background/50 rounded-t-xl">
-                             <h3 className="font-bold flex items-center gap-2 text-sm"><span className={cn("h-2 w-2 rounded-full", statusConfig[status].dotClass)}/> {statusConfig[status].label}</h3>
-                             <span className="bg-secondary text-xs px-2 py-0.5 rounded-full font-medium">{colOrders.length}</span>
+                         <div key={status} className="flex-shrink-0 w-[340px] flex flex-col bg-secondary/20 rounded-2xl border border-border/30 overflow-hidden shadow-sm">
+                           <div className="p-4 border-b border-border/30 flex justify-between items-center bg-background/40 backdrop-blur-sm">
+                             <h3 className="font-display font-semibold flex items-center gap-2.5 text-[15px]">
+                               <span className={cn("h-2.5 w-2.5 rounded-full shadow-sm", statusConfig[status].dotClass)}/> 
+                               {statusConfig[status].label}
+                             </h3>
+                             <span className="bg-background border border-border/50 text-xs px-2.5 py-0.5 rounded-full font-bold text-muted-foreground shadow-sm">{colOrders.length}</span>
                            </div>
                            <Droppable droppableId={status}>
                              {(provided, snapshot) => (
-                               <div ref={provided.innerRef} {...provided.droppableProps} className={cn("flex-1 p-3 space-y-3 overflow-y-auto transition-colors", snapshot.isDraggingOver && "bg-secondary/50")}>
+                               <div ref={provided.innerRef} {...provided.droppableProps} className={cn("flex-1 p-3 space-y-3 overflow-y-auto transition-colors min-h-[150px]", snapshot.isDraggingOver && "bg-secondary/40")}>
                                  {colOrders.map((o, index) => (
                                    <Draggable key={o.id} draggableId={o.id} index={index}>
                                      {(provided, snapshot) => (
-                                       <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={cn("bg-background border border-border/50 rounded-lg p-3.5 shadow-sm hover:border-primary/40 transition-colors cursor-grab active:cursor-grabbing", snapshot.isDragging && "shadow-xl border-primary/50 rotate-2 z-50")}>
+                                       <div 
+                                          ref={provided.innerRef} 
+                                          {...provided.draggableProps} 
+                                          {...provided.dragHandleProps} 
+                                          onClick={(e) => {
+                                            // Prevent edit if they are just dragging or clicking a button inside
+                                            if ((e.target as HTMLElement).closest('button')) return;
+                                            openEdit(o);
+                                          }}
+                                          className={cn(
+                                            "group bg-card border border-border/40 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer relative overflow-hidden", 
+                                            snapshot.isDragging && "shadow-2xl border-primary/60 scale-[1.02] rotate-1 z-50 ring-2 ring-primary/20",
+                                            o.paid ? "bg-card" : "bg-card"
+                                          )}
+                                       >
+                                         {/* subtle accent line at the top based on status */}
+                                         <div className={cn("absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity", statusConfig[status].dotClass)} />
+                                         
                                          <div className="flex justify-between items-start mb-3">
-                                           <span className="font-mono text-xs font-bold bg-muted px-1.5 py-0.5 rounded border border-border/50">#{String(o.number).padStart(4, "0")}</span>
-                                           <span className="text-[10px] text-muted-foreground font-medium">{format(new Date(o.entry_date), "dd/MM")}</span>
+                                           <div className="flex items-center gap-2">
+                                             <span className="font-mono text-xs font-bold text-foreground">#{String(o.number).padStart(4, "0")}</span>
+                                             {o.vehicles?.plate && (
+                                               <span className="text-[10px] font-mono font-semibold bg-secondary px-1.5 py-0.5 rounded border border-border/50 text-muted-foreground uppercase tracking-widest">{o.vehicles.plate}</span>
+                                             )}
+                                           </div>
+                                           <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1"><Clock className="h-3 w-3 opacity-70"/> {format(new Date(o.entry_date), "dd/MM")}</span>
                                          </div>
-                                         <h4 className="font-bold text-sm leading-tight text-foreground mb-1">{o.vehicles?.brand} {o.vehicles?.model} {o.vehicles?.plate && <span className="text-xs font-mono font-normal ml-1 text-muted-foreground">{o.vehicles.plate}</span>}</h4>
-                                         <p className="text-xs text-muted-foreground mb-4 line-clamp-1">{o.clients?.name}</p>
-                                         <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50">
-                                           <span className="font-bold text-sm text-foreground">{formatBRL(Number(o.amount))}</span>
-                                           <Badge variant="outline" className={cn("text-[9px] uppercase font-bold tracking-wider", o.paid ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-orange-500/10 text-orange-600 border-orange-500/20")}>{o.paid ? "PAGO" : "PENDENTE"}</Badge>
+                                         
+                                         <div className="mb-4">
+                                           <h4 className="font-bold text-[15px] leading-tight text-foreground mb-1 group-hover:text-primary transition-colors">{o.vehicles?.brand} {o.vehicles?.model}</h4>
+                                           <p className="text-xs text-muted-foreground line-clamp-1 flex items-center gap-1.5">
+                                              <User className="h-3.5 w-3.5 opacity-70" /> {o.clients?.name}
+                                           </p>
                                          </div>
-                                         <div className="mt-3 flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:bg-secondary" onClick={() => openEdit(o)}><Pencil className="h-3 w-3"/></Button>
+                                         
+                                         <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                                           <span className="font-bold text-[15px] text-foreground tracking-tight">{formatBRL(Number(o.amount))}</span>
+                                           
+                                           <div className="flex items-center gap-2">
+                                             {/* Mini toggle paid button */}
+                                             <Button
+                                               type="button"
+                                               variant="ghost"
+                                               size="sm"
+                                               className={cn("h-6 px-2 text-[9px] uppercase font-bold tracking-wider rounded-md border", o.paid ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-700" : "bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/20 hover:text-orange-700")}
+                                               onClick={(e) => {
+                                                 e.stopPropagation();
+                                                 togglePaidMut.mutate({ id: o.id, paid: !o.paid });
+                                               }}
+                                             >
+                                               {o.paid ? "Pago" : "Pendente"}
+                                             </Button>
+                                           </div>
                                          </div>
                                        </div>
                                      )}
