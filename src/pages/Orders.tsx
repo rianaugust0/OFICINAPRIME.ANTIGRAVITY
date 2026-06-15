@@ -24,8 +24,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PrintLayout } from "@/components/PrintLayout";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { User } from "lucide-react";
 
 // Automação Invisível do Estoque (Phase 3)
 const checkAndDeductInventory = async (orderId: string, workshopId: string) => {
@@ -116,22 +114,9 @@ export default function Orders() {
   const { workshopId } = useAuth();
   const qc = useQueryClient();
   const [filter, setFilter] = useState<Status | "all">("all");
-  const [viewMode, setViewMode] = useState<"kanban" | "lista">("kanban");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [printOrder, setPrintOrder] = useState<{order: any, type: "os"|"quote"|"receipt"} | null>(null);
-
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    const { source, destination, draggableId } = result;
-    if (source.droppableId === destination.droppableId) return;
-    
-    const order = orders?.find(o => o.id === draggableId);
-    const newStatus = destination.droppableId as Status;
-    if (order && newStatus) {
-      updateStatusMut.mutate({ order, status: newStatus });
-    }
-  };
 
   // OS Form State
   const [form, setForm] = useState({
@@ -442,270 +427,171 @@ export default function Orders() {
                   <h2 className="text-2xl font-bold tracking-tight">Gestão de Ordens</h2>
                   <p className="text-sm text-muted-foreground">Acompanhe as Ordens de Serviço dos orçamentos aprovados.</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border border-border/50">
-                    <button onClick={() => setViewMode("kanban")} className={cn("px-3 py-1.5 text-xs font-bold rounded-md transition-all", viewMode === "kanban" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>Kanban</button>
-                    <button onClick={() => setViewMode("lista")} className={cn("px-3 py-1.5 text-xs font-bold rounded-md transition-all", viewMode === "lista" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>Lista</button>
-                  </div>
-                  {viewMode === "lista" && (
-                    <div className="flex flex-wrap gap-2">
-                      {(["all", ...statusOrder] as const).map((s) => (
-                        <button key={s} onClick={() => setFilter(s)}
-                          className={cn(
-                            "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shadow-sm",
-                            filter === s ? "bg-foreground text-background border-foreground scale-105" : "bg-background border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-                          )}>
-                          {s === "all" ? "Todas" : statusConfig[s].label} 
-                          <span className={cn("ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]", filter === s ? "bg-background/20" : "bg-secondary text-muted-foreground")}>{counts(s)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="flex flex-wrap gap-2">
+                  {(["all", ...statusOrder] as const).map((s) => (
+                    <button key={s} onClick={() => setFilter(s)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shadow-sm",
+                        filter === s ? "bg-foreground text-background border-foreground scale-105" : "bg-background border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                      )}>
+                      {s === "all" ? "Todas" : statusConfig[s].label} 
+                      <span className={cn("ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]", filter === s ? "bg-background/20" : "bg-secondary text-muted-foreground")}>{counts(s)}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {isLoading ? (
-                <Card className="border-border/60 shadow-sm overflow-hidden bg-background">
+              <Card className="border-border/60 shadow-sm overflow-hidden bg-background">
+                {isLoading ? (
                   <div className="p-8 space-y-4">
                     {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
                   </div>
-                </Card>
-              ) : viewMode === "lista" ? (
-                <Card className="border-border/60 shadow-sm overflow-hidden bg-background">
-                  {filtered.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-                        <FileText className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                      <h3 className="text-lg font-semibold">Nenhuma ordem encontrada</h3>
-                      <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-                        {filter !== "all" ? `Nenhuma OS com o status "${statusConfig[filter as Status].label}".` : "Comece criando a sua primeira Ordem de Serviço."}
-                      </p>
+                ) : filtered.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                      <FileText className="h-8 w-8 text-muted-foreground" />
                     </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader className="bg-secondary/40">
-                          <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-[100px]">OS</TableHead>
-                            <TableHead>Cliente / Veículo</TableHead>
-                            <TableHead className="w-[180px]">Status</TableHead>
-                            <TableHead className="text-center w-[120px]">Datas</TableHead>
-                            <TableHead className="text-right w-[140px]">Financeiro</TableHead>
-                            <TableHead className="w-[180px] text-right pr-6">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filtered.map((o) => {
-                            const rawStatus = String(o.status);
-                            const normalizedStatus: Status = (rawStatus === "recebido" || rawStatus === "em_analise" || rawStatus === "aguardando_aprovacao") ? "aguardando" : (rawStatus === "em_andamento" ? "em_manutencao" : rawStatus as Status);
-                            const cfg = statusConfig[normalizedStatus] || statusConfig.aguardando;
-                            const next = nextStatus(normalizedStatus);
-                            const prev = prevStatus(normalizedStatus);
-                            
-                            return (
-                              <TableRow key={o.id} className="group hover:bg-secondary/40 transition-colors">
-                                <TableCell>
-                                  <span className="font-mono font-bold text-sm">#{String(o.number).padStart(4, "0")}</span>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex flex-col">
-                                    <span className="font-semibold text-sm">{o.vehicles?.brand} {o.vehicles?.model} {o.vehicles?.plate && <span className="text-xs font-mono font-normal ml-1 bg-muted px-1 py-0.5 rounded border border-border/50">{o.vehicles.plate}</span>}</span>
-                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                                      <span>{o.clients?.name}</span>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold tracking-wide uppercase", cfg.badgeClass)}>
-                                    <span className={cn("h-1.5 w-1.5 rounded-full", cfg.dotClass)} />
-                                    {cfg.label}
-                                  </div>
-                                  {next && (
-                                    <div className="mt-2">
-                                      <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 py-0 border-primary/20 hover:border-primary/50 text-muted-foreground hover:text-foreground" onClick={() => updateStatusMut.mutate({ order: o, status: next })}>
-                                        Mover p/ {statusConfig[next].label} <ArrowRight className="h-3 w-3 ml-1" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <span className="text-xs font-medium text-foreground">{format(new Date(o.entry_date), "dd/MM/yy")}</span>
-                                    {o.expected_delivery ? (
-                                      <span className="text-[10px] text-muted-foreground">Até {format(new Date(o.expected_delivery), "dd/MM/yy")}</span>
-                                    ) : (
-                                      <span className="text-[10px] text-muted-foreground">—</span>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex flex-col items-end gap-1">
-                                    <span className="font-semibold tabular-nums text-sm">{formatBRL(Number(o.amount))}</span>
-                                    <Button 
-                                      variant="default" 
-                                      size="sm" 
-                                      className={cn("h-7 px-3 text-xs font-bold tracking-wider rounded-md shadow-md transition-all hover:-translate-y-0.5", o.paid ? "bg-emerald-500 hover:bg-emerald-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white")}
-                                      onClick={() => togglePaidMut.mutate({ id: o.id, paid: !o.paid })}
-                                      title="Clique para alterar entre PAGO e PENDENTE"
-                                    >
-                                      {o.paid ? "✓ PAGO" : "⏳ PENDENTE"}
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-right pr-4">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Button variant="outline" size="sm" onClick={() => handlePrint(o, "os")} className="h-8 border-border text-foreground hover:bg-secondary" title="Imprimir Ordem de Serviço">
-                                      <Printer className="h-4 w-4 mr-1.5" /> Imprimir
-                                    </Button>
-                                    
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-56">
-                                          <DropdownMenuItem onClick={() => {
-                                            navigator.clipboard.writeText(`${window.location.origin}/portal/os/${o.id}`);
-                                            toast.success("Link do Portal copiado!");
-                                          }} className="cursor-pointer font-bold text-blue-600">
-                                            <Link2 className="h-4 w-4 mr-2" /> Copiar Link Público
-                                          </DropdownMenuItem>
-                                          
-                                          {o.paid && (
-                                          <DropdownMenuItem onClick={() => handlePrint(o, "receipt")} className="cursor-pointer font-bold text-emerald-600">
-                                            <FileText className="h-4 w-4 mr-2" /> Imprimir Recibo
-                                          </DropdownMenuItem>
-                                        )}
-                                        <DropdownMenuItem onClick={() => openEdit(o)} className="cursor-pointer">
-                                          <Pencil className="h-4 w-4 mr-2" /> Editar OS
-                                        </DropdownMenuItem>
-                                        
-                                        {o.status === "pronto" && o.clients?.phone && (
-                                          <DropdownMenuItem onClick={() => {
-                                            const msg = WhatsAppTemplates.orderReady(o.clients!.name, `${o.vehicles?.brand} ${o.vehicles?.model}`, o.vehicles?.plate ?? "");
-                                            if (workshopId) {
-                                              enqueueAutomation(workshopId, "whatsapp_order_ready", { phone: o.clients!.phone!, message: msg, client_name: o.clients!.name, reference: `OS #${String(o.number).padStart(4, "0")}` }).catch(() => {});
-                                            }
-                                            openWhatsApp(o.clients!.phone, msg);
-                                          }} className="cursor-pointer">
-                                            <MessageCircle className="h-4 w-4 mr-2 text-green-500" /> Avisar Cliente
-                                          </DropdownMenuItem>
-                                        )}
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={() => { if (confirm("Excluir OS permanentemente?")) delMut.mutate(o.id); }}>
-                                          <Trash2 className="h-4 w-4 mr-2" /> Excluir OS
-                                        </DropdownMenuItem>
-                                        
-                                        {prev && (
-                                          <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-muted-foreground cursor-pointer" onClick={() => { if (confirm(`Reverter o status para "${statusConfig[prev].label}"?`)) updateStatusMut.mutate({ order: o, status: prev }); }}>
-                                              ⏪ Reverter Status ({statusConfig[prev].label})
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </Card>
-              ) : (
-                <DragDropContext onDragEnd={onDragEnd}>
-                  <div className="flex gap-6 overflow-x-auto pb-6 h-full min-h-[600px] items-start px-2">
-                    {statusOrder.map(status => {
-                       const colOrders = (orders ?? []).filter(o => o.status === status);
-                       return (
-                         <div key={status} className="flex-shrink-0 w-[340px] flex flex-col bg-secondary/20 rounded-2xl border border-border/30 overflow-hidden shadow-sm">
-                           <div className="p-4 border-b border-border/30 flex justify-between items-center bg-background/40 backdrop-blur-sm">
-                             <h3 className="font-display font-semibold flex items-center gap-2.5 text-[15px]">
-                               <span className={cn("h-2.5 w-2.5 rounded-full shadow-sm", statusConfig[status].dotClass)}/> 
-                               {statusConfig[status].label}
-                             </h3>
-                             <span className="bg-background border border-border/50 text-xs px-2.5 py-0.5 rounded-full font-bold text-muted-foreground shadow-sm">{colOrders.length}</span>
-                           </div>
-                           <Droppable droppableId={status}>
-                             {(provided, snapshot) => (
-                               <div ref={provided.innerRef} {...provided.droppableProps} className={cn("flex-1 p-3 space-y-3 overflow-y-auto transition-colors min-h-[150px]", snapshot.isDraggingOver && "bg-secondary/40")}>
-                                 {colOrders.map((o, index) => (
-                                   <Draggable key={o.id} draggableId={o.id} index={index}>
-                                     {(provided, snapshot) => (
-                                       <div 
-                                          ref={provided.innerRef} 
-                                          {...provided.draggableProps} 
-                                          {...provided.dragHandleProps} 
-                                          onClick={(e) => {
-                                            // Prevent edit if they are just dragging or clicking a button inside
-                                            if ((e.target as HTMLElement).closest('button')) return;
-                                            openEdit(o);
-                                          }}
-                                          className={cn(
-                                            "group bg-card border border-border/40 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer relative overflow-hidden", 
-                                            snapshot.isDragging && "shadow-2xl border-primary/60 scale-[1.02] rotate-1 z-50 ring-2 ring-primary/20",
-                                            o.paid ? "bg-card" : "bg-card"
-                                          )}
-                                       >
-                                         {/* subtle accent line at the top based on status */}
-                                         <div className={cn("absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity", statusConfig[status].dotClass)} />
-                                         
-                                         <div className="flex justify-between items-start mb-3">
-                                           <div className="flex items-center gap-2">
-                                             <span className="font-mono text-xs font-bold text-foreground">#{String(o.number).padStart(4, "0")}</span>
-                                             {o.vehicles?.plate && (
-                                               <span className="text-[10px] font-mono font-semibold bg-secondary px-1.5 py-0.5 rounded border border-border/50 text-muted-foreground uppercase tracking-widest">{o.vehicles.plate}</span>
-                                             )}
-                                           </div>
-                                           <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1"><Clock className="h-3 w-3 opacity-70"/> {format(new Date(o.entry_date), "dd/MM")}</span>
-                                         </div>
-                                         
-                                         <div className="mb-4">
-                                           <h4 className="font-bold text-[15px] leading-tight text-foreground mb-1 group-hover:text-primary transition-colors">{o.vehicles?.brand} {o.vehicles?.model}</h4>
-                                           <p className="text-xs text-muted-foreground line-clamp-1 flex items-center gap-1.5">
-                                              <User className="h-3.5 w-3.5 opacity-70" /> {o.clients?.name}
-                                           </p>
-                                         </div>
-                                         
-                                         <div className="flex items-center justify-between pt-3 border-t border-border/30">
-                                           <span className="font-bold text-[15px] text-foreground tracking-tight">{formatBRL(Number(o.amount))}</span>
-                                           
-                                           <div className="flex items-center gap-2">
-                                             {/* Mini toggle paid button */}
-                                             <Button
-                                               type="button"
-                                               variant="ghost"
-                                               size="sm"
-                                               className={cn("h-6 px-2 text-[9px] uppercase font-bold tracking-wider rounded-md border", o.paid ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-700" : "bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/20 hover:text-orange-700")}
-                                               onClick={(e) => {
-                                                 e.stopPropagation();
-                                                 togglePaidMut.mutate({ id: o.id, paid: !o.paid });
-                                               }}
-                                             >
-                                               {o.paid ? "Pago" : "Pendente"}
-                                             </Button>
-                                           </div>
-                                         </div>
-                                       </div>
-                                     )}
-                                   </Draggable>
-                                 ))}
-                                 {provided.placeholder}
-                               </div>
-                             )}
-                           </Droppable>
-                         </div>
-                       );
-                    })}
+                    <h3 className="text-lg font-semibold">Nenhuma ordem encontrada</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                      {filter !== "all" ? `Nenhuma OS com o status "${statusConfig[filter as Status].label}".` : "Comece criando a sua primeira Ordem de Serviço."}
+                    </p>
                   </div>
-                </DragDropContext>
-              )}
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-secondary/40">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="w-[100px]">OS</TableHead>
+                          <TableHead>Cliente / Veículo</TableHead>
+                          <TableHead className="w-[180px]">Status</TableHead>
+                          <TableHead className="text-center w-[120px]">Datas</TableHead>
+                          <TableHead className="text-right w-[140px]">Financeiro</TableHead>
+                          <TableHead className="w-[180px] text-right pr-6">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.map((o) => {
+                          const rawStatus = String(o.status);
+                          const normalizedStatus: Status = (rawStatus === "recebido" || rawStatus === "em_analise" || rawStatus === "aguardando_aprovacao") ? "aguardando" : (rawStatus === "em_andamento" ? "em_manutencao" : rawStatus as Status);
+                          const cfg = statusConfig[normalizedStatus] || statusConfig.aguardando;
+                          const next = nextStatus(normalizedStatus);
+                          const prev = prevStatus(normalizedStatus);
+                          
+                          return (
+                            <TableRow key={o.id} className="group hover:bg-secondary/40 transition-colors">
+                              <TableCell>
+                                <span className="font-mono font-bold text-sm">#{String(o.number).padStart(4, "0")}</span>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-sm">{o.vehicles?.brand} {o.vehicles?.model} {o.vehicles?.plate && <span className="text-xs font-mono font-normal ml-1 bg-muted px-1 py-0.5 rounded border border-border/50">{o.vehicles.plate}</span>}</span>
+                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                                    <span>{o.clients?.name}</span>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold tracking-wide uppercase", cfg.badgeClass)}>
+                                  <span className={cn("h-1.5 w-1.5 rounded-full", cfg.dotClass)} />
+                                  {cfg.label}
+                                </div>
+                                {next && (
+                                  <div className="mt-2">
+                                    <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 py-0 border-primary/20 hover:border-primary/50 text-muted-foreground hover:text-foreground" onClick={() => updateStatusMut.mutate({ order: o, status: next })}>
+                                      Mover p/ {statusConfig[next].label} <ArrowRight className="h-3 w-3 ml-1" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <span className="text-xs font-medium text-foreground">{format(new Date(o.entry_date), "dd/MM/yy")}</span>
+                                  {o.expected_delivery ? (
+                                    <span className="text-[10px] text-muted-foreground">Até {format(new Date(o.expected_delivery), "dd/MM/yy")}</span>
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground">—</span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex flex-col items-end gap-1">
+                                  <span className="font-semibold tabular-nums text-sm">{formatBRL(Number(o.amount))}</span>
+                                  <Button 
+                                    variant="default" 
+                                    size="sm" 
+                                    className={cn("h-7 px-3 text-xs font-bold tracking-wider rounded-md shadow-md transition-all hover:-translate-y-0.5", o.paid ? "bg-emerald-500 hover:bg-emerald-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white")}
+                                    onClick={() => togglePaidMut.mutate({ id: o.id, paid: !o.paid })}
+                                    title="Clique para alterar entre PAGO e PENDENTE"
+                                  >
+                                    {o.paid ? "✓ PAGO" : "⏳ PENDENTE"}
+                                  </Button>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right pr-4">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button variant="outline" size="sm" onClick={() => handlePrint(o, "os")} className="h-8 border-border text-foreground hover:bg-secondary" title="Imprimir Ordem de Serviço">
+                                    <Printer className="h-4 w-4 mr-1.5" /> Imprimir
+                                  </Button>
+                                  
+                                  <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuItem onClick={() => {
+                                          navigator.clipboard.writeText(`${window.location.origin}/portal/os/${o.id}`);
+                                          toast.success("Link do Portal copiado!");
+                                        }} className="cursor-pointer font-bold text-blue-600">
+                                          <Link2 className="h-4 w-4 mr-2" /> Copiar Link Público
+                                        </DropdownMenuItem>
+                                        
+                                        {o.paid && (
+                                        <DropdownMenuItem onClick={() => handlePrint(o, "receipt")} className="cursor-pointer font-bold text-emerald-600">
+                                          <FileText className="h-4 w-4 mr-2" /> Imprimir Recibo
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuItem onClick={() => openEdit(o)} className="cursor-pointer">
+                                        <Pencil className="h-4 w-4 mr-2" /> Editar OS
+                                      </DropdownMenuItem>
+                                      
+                                      {o.status === "pronto" && o.clients?.phone && (
+                                        <DropdownMenuItem onClick={() => {
+                                          const msg = WhatsAppTemplates.orderReady(o.clients!.name, `${o.vehicles?.brand} ${o.vehicles?.model}`, o.vehicles?.plate ?? "");
+                                          if (workshopId) {
+                                            enqueueAutomation(workshopId, "whatsapp_order_ready", { phone: o.clients!.phone!, message: msg, client_name: o.clients!.name, reference: `OS #${String(o.number).padStart(4, "0")}` }).catch(() => {});
+                                          }
+                                          openWhatsApp(o.clients!.phone, msg);
+                                        }} className="cursor-pointer">
+                                          <MessageCircle className="h-4 w-4 mr-2 text-green-500" /> Avisar Cliente
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={() => { if (confirm("Excluir OS permanentemente?")) delMut.mutate(o.id); }}>
+                                        <Trash2 className="h-4 w-4 mr-2" /> Excluir OS
+                                      </DropdownMenuItem>
+                                      
+                                      {prev && (
+                                        <>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem className="text-muted-foreground cursor-pointer" onClick={() => { if (confirm(`Reverter o status para "${statusConfig[prev].label}"?`)) updateStatusMut.mutate({ order: o, status: prev }); }}>
+                                            ⏪ Reverter Status ({statusConfig[prev].label})
+                                          </DropdownMenuItem>
+                                        </>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </Card>
             </div>
 
             <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingId(null); }}>
