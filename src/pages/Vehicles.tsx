@@ -17,6 +17,7 @@ import { formatPlate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUpload } from "@/components/ImageUpload";
+import { fetchVehicleByPlate } from "@/lib/plateApi";
 
 interface VehicleRow {
   id: string;
@@ -41,6 +42,31 @@ export default function Vehicles() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ client_id: "", brand: "", model: "", year: "", plate: "", color: "", mileage: "", photo_url: "" as string | null });
+  const [isFetchingPlate, setIsFetchingPlate] = useState(false);
+
+  const handlePlateLookup = async () => {
+    if (!form.plate || form.plate.length < 7) {
+      toast.error("Digite uma placa válida para buscar.");
+      return;
+    }
+    
+    setIsFetchingPlate(true);
+    try {
+      const data = await fetchVehicleByPlate(form.plate);
+      setForm(prev => ({
+        ...prev,
+        brand: data.brand,
+        model: data.model,
+        year: String(data.year),
+        color: data.color
+      }));
+      toast.success("Dados do veículo encontrados com sucesso!");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao buscar placa. Tente manualmente.");
+    } finally {
+      setIsFetchingPlate(false);
+    }
+  };
 
   const { data: vehicles, isLoading } = useQuery({
     queryKey: ["vehicles", workshopId],
@@ -338,8 +364,30 @@ export default function Vehicles() {
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Placa</Label>
+                    <div className="relative">
+                      <Input 
+                        value={form.plate} 
+                        onChange={(e) => setForm({ ...form, plate: formatPlate(e.target.value) })} 
+                        placeholder="ABC-1D23" 
+                        className="bg-secondary/20 pr-10 uppercase" 
+                        maxLength={8}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-primary"
+                        onClick={handlePlateLookup}
+                        disabled={isFetchingPlate}
+                        title="Buscar dados do veículo pela placa"
+                      >
+                        {isFetchingPlate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
                   <div className="space-y-2"><Label>Ano</Label><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} className="bg-secondary/20" /></div>
-                  <div className="space-y-2"><Label>Placa</Label><Input value={form.plate} onChange={(e) => setForm({ ...form, plate: formatPlate(e.target.value) })} placeholder="ABC-1D23" className="bg-secondary/20" /></div>
                   <div className="space-y-2"><Label>Cor</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="Preto" className="bg-secondary/20" /></div>
                 </div>
                 <div className="space-y-2">
