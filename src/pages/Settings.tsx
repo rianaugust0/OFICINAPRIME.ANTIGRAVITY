@@ -21,6 +21,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Link, useSearchParams } from "react-router-dom";
+import { SettingsFiscal } from "@/components/SettingsFiscal";
+import { FileText } from "lucide-react";
 
 type Plan = "essencial" | "profissional" | "premium";
 
@@ -163,11 +165,12 @@ export default function Settings() {
           ) : (
           <div className="mx-auto max-w-6xl space-y-6 p-6">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-auto lg:inline-grid">
-                <TabsTrigger value="workshop" className="gap-2"><Building2 className="h-4 w-4" /> Oficina</TabsTrigger>
-                <TabsTrigger value="messages" className="gap-2"><MessageSquare className="h-4 w-4" /> Mensagens</TabsTrigger>
-                <TabsTrigger value="users" className="gap-2"><UsersIcon className="h-4 w-4" /> Usuários</TabsTrigger>
-                <TabsTrigger value="plan" className="gap-2"><CreditCard className="h-4 w-4" /> Plano</TabsTrigger>
+              <TabsList className="flex flex-wrap h-auto w-full justify-start lg:w-auto bg-muted/50 p-1">
+                <TabsTrigger value="workshop" className="gap-2 flex-1 min-w-[120px]"><Building2 className="h-4 w-4" /> Oficina</TabsTrigger>
+                <TabsTrigger value="messages" className="gap-2 flex-1 min-w-[120px]"><MessageSquare className="h-4 w-4" /> Mensagens</TabsTrigger>
+                <TabsTrigger value="fiscal" className="gap-2 flex-1 min-w-[140px]"><FileText className="h-4 w-4" /> Fiscal (NF-e)</TabsTrigger>
+                <TabsTrigger value="users" className="gap-2 flex-1 min-w-[120px]"><UsersIcon className="h-4 w-4" /> Usuários</TabsTrigger>
+                <TabsTrigger value="plan" className="gap-2 flex-1 min-w-[120px]"><CreditCard className="h-4 w-4" /> Plano</TabsTrigger>
               </TabsList>
 
               <TabsContent value="workshop" className="space-y-6">
@@ -273,6 +276,10 @@ export default function Settings() {
                 </Card>
               </TabsContent>
 
+              <TabsContent value="fiscal" className="space-y-4">
+                <SettingsFiscal workshopId={workshopId!} />
+              </TabsContent>
+
               <TabsContent value="users" className="space-y-4">
                 <Card className="p-6 text-center">
                   <UsersIcon className="mx-auto h-10 w-10 text-muted-foreground" />
@@ -283,123 +290,19 @@ export default function Settings() {
               </TabsContent>
 
               <TabsContent value="plan" className="space-y-6">
-                <Card className="overflow-hidden relative border-primary/20 shadow-xl">
-                  {/* Decorative background blur */}
-                  <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/20 blur-[80px] pointer-events-none" />
-                  
-                  <div className="bg-slate-900 p-8 sm:p-10 relative z-10 text-white overflow-hidden">
-                    {/* Pattern Overlay */}
-                    <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-                    
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
-                      <div className="space-y-5">
-                        <div className={cn("inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest border", 
-                          ws?.plan === 'vitalicio' ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-amber-500/20 text-amber-500 border-amber-500/30"
-                        )}>
-                          <Crown className="h-4 w-4" /> {ws?.plan === 'vitalicio' ? "Licença Ativa" : "Período de Teste"}
-                        </div>
-                        <div>
-                          <h2 className="font-display text-4xl sm:text-5xl font-black tracking-tight mb-3">Licença Única <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">Prime</span></h2>
-                          <p className="text-slate-300 max-w-lg text-lg leading-relaxed">
-                            Você possui acesso vitalício e ilimitado ao melhor sistema de gestão para oficinas. Sem taxas ocultas, sem limites de cadastro.
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="md:text-right shrink-0">
-                        <div className="inline-block bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 text-center">
-                          <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Investimento Único</p>
-                          <p className="text-5xl sm:text-6xl font-black text-white flex items-start justify-center md:justify-end gap-1">
-                            <span className="text-2xl font-bold text-slate-400 mt-1">R$</span>150
-                          </p>
-                          {ws?.plan === 'vitalicio' ? (
-                            <p className="text-emerald-400 text-sm font-semibold mt-3 flex items-center justify-center md:justify-end gap-1.5">
-                              <Check className="h-4 w-4" /> Pago e Liberado
-                            </p>
-                          ) : (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="hero" className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90">
-                                  Garantir Acesso Vitalício
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-md">
-                                <DialogHeader>
-                                  <DialogTitle>Pagamento via PIX</DialogTitle>
-                                  <DialogDescription>
-                                    Transfira o valor exato para a chave abaixo e envie o comprovante para liberação do sistema.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                
-                                <div className="space-y-4 py-4">
-                                  <div className="flex flex-col items-center justify-center space-y-3 bg-secondary/50 p-4 rounded-xl border border-border">
-                                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-center">Valor: <span className="text-foreground font-black">R$ 150,00</span></p>
-                                    <div className="bg-white p-2 rounded-xl shadow-sm">
-                                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406150.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963048500")}`} alt="PIX QR Code" className="w-40 h-40" />
-                                    </div>
-                                    <p className="text-xs font-medium text-muted-foreground">Escaneie pelo app do banco</p>
-                                  </div>
-                                  
-                                  <div className="space-y-2">
-                                    <Label>Ou use o PIX Copia e Cola</Label>
-                                    <div className="flex gap-2">
-                                      <Input readOnly value="00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406150.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963048500" className="font-mono text-[10px] bg-secondary/30 text-muted-foreground" />
-                                      <Button variant="outline" onClick={() => {
-                                        navigator.clipboard.writeText("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406150.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963048500");
-                                        toast.success("Código PIX copiado!");
-                                      }}>Copiar</Button>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="pt-4 space-y-3">
-                                    <p className="text-xs text-muted-foreground text-center">
-                                      Após o pagamento, clique no botão abaixo para enviar o comprovante no WhatsApp do suporte. Sua licença será ativada em poucos minutos.
-                                    </p>
-                                    <Button 
-                                      className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white gap-2 font-bold" 
-                                      onClick={() => window.open('https://wa.me/5562985658094?text=Olá! Acabei de fazer o PIX da minha Licença Vitalícia da OficinaPrime. Segue o comprovante:', '_blank')}
-                                    >
-                                      Enviar Comprovante no WhatsApp
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                <Card className="p-10 text-center flex flex-col items-center justify-center space-y-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-2">
+                    <CreditCard className="h-8 w-8" />
                   </div>
-                  
-                  <div className="bg-background p-8 sm:p-10 relative z-10 border-t border-border/50">
-                    <h3 className="mb-6 font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">Todos os benefícios liberados</h3>
-                    <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500"><Check className="h-3.5 w-3.5" /></div>
-                        <p className="font-medium text-foreground">Ordens de Serviço <span className="font-bold text-emerald-600 dark:text-emerald-400">ilimitadas</span></p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500"><Check className="h-3.5 w-3.5" /></div>
-                        <p className="font-medium text-foreground">Gestão completa de Clientes e Veículos</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500"><Check className="h-3.5 w-3.5" /></div>
-                        <p className="font-medium text-foreground">Controle de Estoque Inteligente</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500"><Check className="h-3.5 w-3.5" /></div>
-                        <p className="font-medium text-foreground">Portal Central do Cliente VIP integrado</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500"><Check className="h-3.5 w-3.5" /></div>
-                        <p className="font-medium text-foreground">Usuários e mecânicos ilimitados na equipe</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500"><Check className="h-3.5 w-3.5" /></div>
-                        <p className="font-medium text-foreground">Atualizações e novas funções sem custo adicional</p>
-                      </div>
-                    </div>
-                  </div>
+                  <h2 className="font-display text-2xl font-bold tracking-tight">Assinatura e Cobrança</h2>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Nós migramos o gerenciamento de planos para uma página dedicada onde você pode visualizar os pacotes e gerenciar seu cartão de crédito.
+                  </p>
+                  <Link to="/assinatura" className="mt-4">
+                    <Button variant="hero" size="lg" className="px-8 font-bold">
+                      Gerenciar Minha Assinatura
+                    </Button>
+                  </Link>
                 </Card>
               </TabsContent>
             </Tabs>

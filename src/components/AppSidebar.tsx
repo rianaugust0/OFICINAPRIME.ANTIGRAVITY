@@ -22,6 +22,8 @@ import {
   LogOut,
   Bot,
   Lock,
+  CreditCard,
+  FileText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -83,6 +85,7 @@ const groups = [
     label: "Financeiro",
     items: [
       { title: "Financeiro", url: "/financeiro", icon: Wallet },
+      { title: "Notas Fiscais", url: "/notas-fiscais", icon: FileText },
       { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
     ]
   },
@@ -92,6 +95,7 @@ const groups = [
       { title: "Notificações", url: "/notificacoes", icon: Bell },
       { title: "Equipe", url: "/equipe", icon: UsersRound },
       { title: "Configurações", url: "/configuracoes", icon: Settings },
+      { title: "Assinatura", url: "/assinatura", icon: CreditCard },
     ]
   }
 ];
@@ -101,86 +105,14 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
   const { workshop } = useAuth();
-  const [showPix, setShowPix] = useState(false);
   
   const isActive = (path: string) => pathname === path;
   const logoUrl = workshop?.workshops?.logo_url;
   const wsName = workshop?.workshops?.name;
   
-  const createdAt = workshop?.workshops?.created_at ? new Date(workshop.workshops.created_at) : new Date();
-  const trialEnd = addDays(createdAt, 30);
-  const daysLeft = Math.max(0, differenceInDays(trialEnd, new Date()));
-  // Constants for trial banner
-  const isTrial = workshop?.workshops?.plan !== "vitalicio" && workshop?.workshops?.plan !== "premium";
-  const isExpired = isTrial && daysLeft <= 0;
-
-  if (isExpired) {
-    return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-700">
-         <div className="bg-zinc-950/80 backdrop-blur-3xl rounded-3xl p-8 max-w-lg w-full shadow-[0_0_80px_rgba(212,175,55,0.15)] border border-white/10 relative overflow-hidden z-10 animate-in zoom-in-95 duration-500">
-            {/* Elegant gradient mesh background */}
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent"></div>
-            <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/20 rounded-full blur-[80px]"></div>
-            
-            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-500/20 to-amber-700/5 text-amber-500 rounded-2xl flex items-center justify-center mb-6 border border-amber-500/20 shadow-[0_0_30px_rgba(217,119,6,0.15)]">
-               <Lock className="w-10 h-10" strokeWidth={1.5} />
-            </div>
-            
-            <div className="text-center mb-8 relative z-10">
-              <h2 className="text-3xl font-display font-semibold text-white mb-2 tracking-tight">Tempo Esgotado</h2>
-              <p className="text-zinc-400 text-sm leading-relaxed max-w-md mx-auto">
-                Seu período de experiência chegou ao fim. Para garantir que sua oficina continue operando sem interrupções e para preservar todos os seus dados e histórico, faça o upgrade para a <strong className="text-amber-500 font-medium">Licença Vitalícia</strong>.
-              </p>
-            </div>
-            
-            {showPix ? (
-              <div className="bg-zinc-900 border border-amber-500/30 rounded-2xl p-6 relative z-10 animate-in slide-in-from-bottom-4 duration-300">
-                <h3 className="text-white font-medium text-center mb-2">Pagamento via PIX</h3>
-                <p className="text-zinc-400 text-xs text-center mb-6">Transfira o valor exato para a chave abaixo e envie o comprovante.</p>
-                
-                <div className="flex flex-col items-center justify-center space-y-4 mb-6">
-                  <p className="text-sm font-medium text-amber-500 uppercase tracking-widest text-center">Valor: <span className="text-white font-black">R$ 347,00</span></p>
-                  <div className="bg-white p-3 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381")}`} alt="PIX QR Code" className="w-40 h-40" />
-                  </div>
-                  <p className="text-xs font-medium text-zinc-500">Escaneie pelo app do banco</p>
-                </div>
-                
-                <div className="space-y-2 mb-4">
-                  <Label className="text-zinc-400">Ou use o PIX Copia e Cola</Label>
-                  <div className="flex gap-2">
-                    <Input readOnly value="00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381" className="font-mono text-[10px] bg-black/50 text-zinc-300 border-zinc-800" />
-                    <button className="px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-black font-semibold text-sm transition-colors" onClick={() => {
-                      navigator.clipboard.writeText("00020126330014BR.GOV.BCB.PIX0111703414381115204000053039865406347.005802BR5925Rian Augusto Alves da Sil6009SAO PAULO62140510hZKXEgwLe963045381");
-                      toast.success("Código PIX copiado!");
-                    }}>Copiar</button>
-                  </div>
-                </div>
-                
-                <p className="text-[10px] text-zinc-500 text-center mt-4 mb-4">
-                  Após o pagamento, envie o comprovante para o suporte para liberação imediata.
-                </p>
-
-                <a href="https://wa.me/5562985658094?text=Olá! Acabei de fazer o PIX da minha Licença Vitalícia da OficinaPrime. Segue o comprovante:" target="_blank" rel="noopener noreferrer" className="relative w-full overflow-hidden group bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl transition-all active:scale-95 text-sm border border-emerald-400/30 hover:border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center gap-2">
-                  Enviar Comprovante via WhatsApp
-                </a>
-              </div>
-            ) : (
-              <button 
-                onClick={() => setShowPix(true)}
-                className="relative w-full overflow-hidden group bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-4 rounded-xl transition-all active:scale-95 mb-4 text-base border border-emerald-400/30 hover:border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]"
-              >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500/10 via-emerald-400/30 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  Garantir Acesso Vitalício <span className="text-emerald-100 font-semibold">(R$ 347)</span>
-                </span>
-              </button>
-            )}
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Liberação Imediata Pós-Pagamento</p>
-         </div>
-      </div>
-    );
-  }
+  const trialEnds = workshop?.workshops?.trial_ends_at ? new Date(workshop.workshops.trial_ends_at) : addDays(new Date(), 7);
+  const daysLeft = Math.max(0, differenceInDays(trialEnds, new Date()));
+  const isTrial = workshop?.workshops?.subscription_status === 'trialing';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">

@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { WhatsappConnectCard } from "@/components/WhatsappConnectCard";
 
 type AutomationType = "service_reminder" | "birthday" | "feedback" | "payment";
 
@@ -140,7 +141,9 @@ export default function Automations() {
           </header>
 
           <div className="space-y-6 p-4 md:p-8 flex-1 overflow-y-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <WhatsappConnectCard workshopId={workshopId!} />
+            
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-border/50">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">Fluxos Automáticos</h2>
                 <p className="text-sm text-muted-foreground">Regras e mensagens pré-configuradas reais do seu banco de dados.</p>
@@ -174,9 +177,9 @@ export default function Automations() {
               <Card className="p-4 border-border/60 bg-background flex flex-col justify-center items-start shadow-sm border-l-4 border-l-blue-500">
                 <div className="flex items-center gap-2 mb-2">
                   <CalendarClock className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-semibold text-muted-foreground">Status do Robô</span>
+                  <span className="text-sm font-semibold text-muted-foreground">Automações Pausadas</span>
                 </div>
-                <span className="text-xl font-display font-bold text-blue-600">Aguardando Fase 3</span>
+                <span className="text-3xl font-display font-bold text-blue-600">{automations.filter((a: any) => !a.is_active).length}</span>
               </Card>
             </div>
 

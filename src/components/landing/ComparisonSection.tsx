@@ -2,7 +2,7 @@ import { Check, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 const rows = [
-  { label: "Mensalidade", prime: "R$ 150 — tudo incluso", others: "R$ 200+ por módulo" },
+  { label: "Mensalidade", prime: "A partir de R$ 97", others: "R$ 200+ por módulo" },
   { label: "Cancelar quando quiser", prime: true, others: false },
   { label: "Ordens de Serviço", prime: "Ilimitadas", others: "Limitadas por plano" },
   { label: "Usuários simultâneos", prime: "Ilimitados", others: "Cobrança por usuário" },
@@ -59,7 +59,7 @@ export function ComparisonSection() {
             </div>
             <div className="border-x border-white/10 px-3 py-5 text-center sm:px-6">
               <p className="text-xs uppercase tracking-wider text-gold">OficinaPrime</p>
-              <p className="mt-1 text-sm font-bold text-foreground sm:text-base">R$ 150/mês</p>
+              <p className="mt-1 text-sm font-bold text-foreground sm:text-base">A partir de R$ 97/mês</p>
             </div>
             <div className="px-3 py-5 text-center sm:px-6">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Tradicionais</p>
@@ -86,7 +86,7 @@ export function ComparisonSection() {
         </motion.div>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
-          Tudo ilimitado por <span className="font-semibold text-gold">R$ 150/mês</span> — sem módulos extras.
+          Escolha o plano que cabe no seu bolso — e evolua sem limites.
         </p>
       </div>
     </section>

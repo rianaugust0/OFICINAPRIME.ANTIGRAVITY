@@ -135,10 +135,10 @@ export function HeroSection() {
             className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
           >
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-gold" /> 30 dias grátis
+              <ShieldCheck className="h-4 w-4 text-gold" /> 7 dias grátis
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-gold" /> Sem cartão de crédito
+              <Zap className="h-4 w-4 text-gold" /> Cancele quando quiser
             </span>
             <Link
               to="/login"

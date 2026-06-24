@@ -5,8 +5,8 @@ import { trackEvent } from "@/lib/analytics";
 
 const faqs = [
   {
-    q: "Como funciona a assinatura?",
-    a: "O investimento é de R$ 150 por mês com tudo incluso (OS, usuários, WhatsApp e estoque ilimitados). Você pode cancelar quando quiser, sem multa nem fidelidade.",
+    q: "Qual é o valor da mensalidade?",
+    a: "Nossos planos começam a partir de R$ 97 por mês (Plano Básico). Você pode fazer upgrade para planos maiores conforme a sua oficina crescer. E o melhor: você pode cancelar quando quiser, sem multa nem fidelidade.",
   },
   {
     q: "Terei suporte depois da compra?",
@@ -25,8 +25,8 @@ const faqs = [
     a: "Sim. Usamos criptografia de ponta a ponta e backups automáticos diários em nuvem. Seus dados são seus — você pode exportar quando quiser.",
   },
   {
-    q: "E se eu não gostar?",
-    a: "Você tem 30 dias de garantia incondicional. Não gostou? Devolvemos 100% do valor e o cancelamento é imediato, sem burocracia.",
+    q: "E se eu não gostar do sistema?",
+    a: "Você tem 7 dias de garantia incondicional. Não gostou? Devolvemos 100% do valor e o cancelamento é imediato, sem burocracia.",
   },
 ];
 

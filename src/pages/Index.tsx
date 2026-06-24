@@ -10,6 +10,8 @@ import { PricingSection } from "@/components/landing/PricingSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { Footer } from "@/components/landing/Footer";
+import { IntegrationsSection } from "@/components/landing/IntegrationsSection";
+import { WhatsAppFloatingButton } from "@/components/landing/WhatsAppFloatingButton";
 
 export default function Index() {
   useEffect(() => {
@@ -22,7 +24,7 @@ export default function Index() {
       metaDescription.setAttribute('name', 'description');
       document.head.appendChild(metaDescription);
     }
-    metaDescription.setAttribute('content', 'OS, estoque, CRM, financeiro e WhatsApp automático em um só lugar. Tudo ilimitado por R$ 150/mês — cancele quando quiser.');
+    metaDescription.setAttribute('content', 'OS, estoque, CRM, financeiro e WhatsApp automático em um só lugar. Planos a partir de R$ 97/mês — cancele quando quiser.');
   }, []);
 
   return (
@@ -31,6 +33,7 @@ export default function Index() {
       <main>
         <HeroSection />
         <SocialProofSection />
+        <IntegrationsSection />
         <FeaturesSection />
         <FlowSection />
         <ComparisonSection />
@@ -42,6 +45,7 @@ export default function Index() {
         <FAQSection />
       </main>
       <Footer />
+      <WhatsAppFloatingButton />
     </div>
   );
 }
