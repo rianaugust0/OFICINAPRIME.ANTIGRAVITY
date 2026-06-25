@@ -63,9 +63,9 @@ export function Footer() {
               Legal
             </h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-foreground">Termos de uso</a></li>
-              <li><a href="#" className="hover:text-foreground">Política de privacidade</a></li>
-              <li><a href="#" className="hover:text-foreground">LGPD</a></li>
+              <li><Link to="/termos" className="hover:text-foreground">Termos de uso</Link></li>
+              <li><Link to="/privacidade" className="hover:text-foreground">Política de privacidade</Link></li>
+              <li><Link to="/privacidade" className="hover:text-foreground">LGPD</Link></li>
             </ul>
           </div>
         </div>
