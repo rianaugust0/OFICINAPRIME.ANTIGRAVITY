@@ -12,6 +12,7 @@ import { FAQSection } from "@/components/landing/FAQSection";
 import { Footer } from "@/components/landing/Footer";
 import { IntegrationsSection } from "@/components/landing/IntegrationsSection";
 import { WhatsAppFloatingButton } from "@/components/landing/WhatsAppFloatingButton";
+import { RoiCalculatorSection } from "@/components/landing/RoiCalculatorSection";
 
 export default function Index() {
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function Index() {
         <section id="diferenciais">
           <DifferentialsSection />
         </section>
+        <RoiCalculatorSection />
         <TestimonialsSection />
         <PricingSection />
         <FAQSection />

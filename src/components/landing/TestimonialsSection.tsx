@@ -6,25 +6,25 @@ const testimonials = [
     name: "Carlos Mendes",
     role: "Dono — Auto Premium",
     avatar: "CM",
-    text: "Saí da papelada e da planilha. Hoje eu vejo o faturamento da oficina em tempo real do celular. Em 30 dias paguei a licença e ainda sobrou.",
+    text: "Antes eu perdia 2 horas anotando tudo num caderno e abrindo o site do banco pra gerar Pix. Hoje eu crio a OS, e a cobrança sai na hora. A paz de espírito não tem preço.",
   },
   {
     name: "Rafael Souza",
     role: "Gerente — Garage 48",
     avatar: "RS",
-    text: "O WhatsApp automático mudou o jogo. O cliente recebe o aviso quando o carro fica pronto e não enche mais a recepção de ligação.",
+    text: "Minha recepção vivia lotada de cliente perguntando 'Meu carro tá pronto?'. O robô de WhatsApp acabou com isso. O cliente recebe a mensagem no segundo que o mecânico dá baixa.",
   },
   {
     name: "Juliana Alves",
     role: "Sócia — Elite Service",
     avatar: "JA",
-    text: "Buscar histórico pela placa do carro é o melhor recurso. Em 2 segundos eu vejo tudo que já fizemos no veículo do cliente.",
+    text: "Nós usávamos um sistema antigo que precisava de curso pra aprender a clicar nos botões. O OficinaPrime é tão simples que o borracheiro aprendeu em 5 minutos no celular dele.",
   },
   {
     name: "Marcos Ribeiro",
     role: "Mecânico chefe — TurboCar",
     avatar: "MR",
-    text: "Acabou aquela bagunça de orçamento perdido. Aprovação digital, ordem de serviço no tablet e estoque baixando sozinho. Sensacional.",
+    text: "Acabou aquela bagunça de comprar peça duplicada porque esqueceram de dar baixa. A peça entra na OS e já some do estoque. O sistema se paga só com o que economizamos de peça perdida.",
   },
 ];
 

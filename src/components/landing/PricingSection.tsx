@@ -146,8 +146,10 @@ export function PricingSection() {
                   >
                     Testar Grátis
                   </Link>
-                  <p className="mt-4 text-center text-xs text-muted-foreground">
-                    ✓ 7 dias grátis • ✓ Cancele quando quiser
+                  <p className="mt-4 text-center text-[10.5px] leading-tight text-muted-foreground">
+                    <span className="block font-semibold text-emerald-400 mb-1">Garantia Absoluta de 14 Dias</span>
+                    Se você não economizar pelo menos R$ 1.000 em peças e tempo, nós pagamos 1 mês do seu sistema antigo. <br/>
+                    🔒 Não pedimos Cartão de Crédito
                   </p>
                 </div>
               </motion.div>

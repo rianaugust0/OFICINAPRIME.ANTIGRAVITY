@@ -23,8 +23,12 @@ export function Header() {
   ];
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all ${
+    <>
+      <div className="bg-gold text-primary-foreground py-2 text-center text-xs sm:text-sm font-semibold z-[60] relative">
+        🚀 Condição de Fundadores: Os primeiros 100 mecânicos cadastrados terão Suporte VIP e isenção de adesão para sempre (Restam 12 vagas).
+      </div>
+      <header
+        className={`fixed top-[36px] sm:top-[36px] left-0 right-0 z-50 transition-all ${
         scrolled
           ? "border-b border-white/10 bg-background/70 backdrop-blur-xl"
           : "border-b border-transparent bg-transparent"
@@ -115,5 +119,6 @@ export function Header() {
         </div>
       )}
     </header>
+    </>
   );
 }

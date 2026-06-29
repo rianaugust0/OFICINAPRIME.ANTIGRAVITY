@@ -26,9 +26,9 @@ const steps = [
   {
     icon: Wallet,
     step: "04",
-    title: "Financeiro atualizado",
+    title: "Notas e Pix Automáticos",
     description:
-      "Ao finalizar a OS, a conta a receber entra no fluxo de caixa automaticamente.",
+      "Ao finalizar a OS, você gera a cobrança Pix e a Nota Fiscal na mesma tela. Sem abrir o site do banco.",
   },
 ];
 
@@ -41,13 +41,13 @@ export function FlowSection() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-16 max-w-2xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold/20 bg-gold/5 px-3 py-1 text-xs font-medium text-gold">
-            Como funciona o fluxo
+            A prova de "Não sei usar computador"
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Da recepção ao caixa, sem retrabalho
+            Tão fácil que seu mecânico aprende em 5 minutos
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Quatro passos simples que tiram a bagunça do dia a dia da oficina.
+            Quatro passos absurdamente simples. Abra no celular, adicione as peças e deixe o sistema fazer o resto.
           </p>
         </div>
 

@@ -28,24 +28,24 @@ const modules = [
   },
   {
     icon: Wrench,
-    tag: "Oficina",
-    title: "Operação sob controle",
+    tag: "Oficina & Estoque",
+    title: "Estoque Anti-Desperdício",
     description:
-      "Ordens de serviço em tempo real, agenda inteligente de mecânicos e controle de estoque sem planilhas.",
+      "A peça foi pra OS? O sistema subtrai do estoque. Chega de comprar peças duplicadas ou perder dinheiro porque esqueceu de anotar.",
     bullets: [
-      { icon: Calendar, label: "Agenda de mecânicos" },
-      { icon: Package, label: "Estoque integrado às OS" },
+      { icon: Package, label: "Baixa automática na OS" },
+      { icon: Calendar, label: "Controle sem planilhas" },
     ],
   },
   {
     icon: DollarSign,
-    tag: "Vendas & Financeiro",
-    title: "Dinheiro na conta certa",
+    tag: "Faturamento e NF-e",
+    title: "Emita Notas e Pix na Hora",
     description:
-      "Orçamentos precisos, contas a pagar e a receber, fluxo de caixa e relatórios detalhados em poucos cliques.",
+      "Pare de abrir o site do banco. Gere links de cobrança Pix e emita Notas Fiscais automaticamente de dentro da Ordem de Serviço.",
     bullets: [
-      { icon: FileText, label: "Orçamentos profissionais" },
-      { icon: TrendingUp, label: "Relatórios financeiros" },
+      { icon: FileText, label: "NF-e em 1 clique" },
+      { icon: DollarSign, label: "Acabe com a inadimplência" },
     ],
   },
   {
@@ -61,13 +61,13 @@ const modules = [
   },
   {
     icon: Rocket,
-    tag: "Marketing & Automações",
+    tag: "Comunicação (Robô)",
     title: "WhatsApp trabalhando por você",
     description:
-      "Disparos automáticos de lembretes de revisão, avisos de carro pronto e cobranças sem você levantar um dedo.",
+      "Carro ficou pronto? Seu cliente recebe um alerta no WhatsApp. Sem você precisar pegar o celular e digitar uma palavra sequer.",
     bullets: [
-      { icon: MessageCircle, label: "Mensagens automáticas" },
-      { icon: Bell, label: "Lembretes de revisão" },
+      { icon: MessageCircle, label: "Alertas Automáticos" },
+      { icon: Bell, label: "Lembretes de revisão (CRM)" },
     ],
   },
 ];
@@ -78,14 +78,13 @@ export function FeaturesSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-16 max-w-2xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold/20 bg-gold/5 px-3 py-1 text-xs font-medium text-gold">
-            Módulos do sistema
+            Funcionalidades Premium
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Um ecossistema completo para sua oficina
+            Sistemas velhos dão dor de cabeça. O OficinaPrime dá lucro.
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Cada módulo conversa com o outro. Você cadastra uma vez, e a
-            informação flui da recepção ao financeiro.
+            Esqueça aquele sistema cinza que você precisa de curso para usar. Nós criamos um ecossistema que faz o trabalho chato por você.
           </p>
         </div>
 

@@ -66,11 +66,11 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 0.05 }}
             className="max-w-5xl text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-7xl"
           >
-            Assuma o controle{" "}
+            Chega de sistemas complicados. Acelere a{" "}
             <span className="bg-gradient-to-r from-gold via-amber-300 to-gold bg-clip-text text-transparent">
-              absoluto
+              gestão
             </span>{" "}
-            da sua oficina mecânica.
+            da sua oficina.
           </motion.h1>
 
           <motion.p
@@ -79,9 +79,8 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
           >
-            O software definitivo que integra ordens de serviço, clientes,
-            estoque e WhatsApp automático.{" "}
-            <span className="text-foreground/80">Tudo no mesmo lugar.</span>
+            Liberte-se das planilhas velhas. Controle Ordens de Serviço, automatize mensagens no WhatsApp e emita Notas Fiscais e Pix na mesma tela.{" "}
+            <span className="text-foreground/80">Modernize sua oficina em 5 minutos.</span>
           </motion.p>
 
           <motion.form
@@ -111,14 +110,19 @@ export function HeroSection() {
                 }`}
               />
             </div>
-            <button
-              type="submit"
-              onClick={onCtaClick}
-              className="group inline-flex h-13 items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_0_40px_-6px_var(--gold-glow)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_60px_-4px_var(--gold-glow)]"
-            >
-              Testar Grátis
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </button>
+            <div className="flex flex-col gap-1 w-full sm:w-auto">
+              <button
+                type="submit"
+                onClick={onCtaClick}
+                className="group inline-flex h-13 items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_0_40px_-6px_var(--gold-glow)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_60px_-4px_var(--gold-glow)]"
+              >
+                Testar Grátis
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+              <span className="text-[10px] text-muted-foreground text-center flex items-center justify-center gap-1 mt-1">
+                 🔒 Não pedimos Cartão de Crédito
+              </span>
+            </div>
           </motion.form>
 
           {error && (

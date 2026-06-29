@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 /**
  * Opens WhatsApp with a pre-filled message using wa.me link.
  * Phone is sanitized: digits only, with Brazil country code 55 if missing.
@@ -8,6 +10,23 @@ export function openWhatsApp(phone: string | null | undefined, message: string) 
   if (digits.length <= 11) digits = "55" + digits; // BR default
   const url = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/**
+ * Envia uma mensagem automatizada usando o robô de WhatsApp do Backend (Edge Function)
+ */
+export async function sendAutomatedWhatsApp(phone: string, message: string) {
+  try {
+    const { data: response, error } = await supabase.functions.invoke('whatsapp-api', {
+      body: { to: phone, message }
+    });
+    
+    if (error) throw new Error(error.message || "Erro de conexão com o servidor seguro");
+    return response;
+  } catch (error) {
+    console.error("Erro ao enviar WhatsApp automatizado:", error);
+    throw error;
+  }
 }
 
 export const WhatsAppTemplates = {

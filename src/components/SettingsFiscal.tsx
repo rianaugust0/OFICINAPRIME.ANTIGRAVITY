@@ -21,8 +21,12 @@ export function SettingsFiscal({ workshopId }: { workshopId: string }) {
     bairro: "",
     cidade: "",
     estado: "",
-    ambiente: "homologacao"
+    ambiente: "homologacao",
+    certificado_senha: "",
+    certificado_path: ""
   });
+
+  const [uploading, setUploading] = useState(false);
 
   const { data: config, isLoading } = useQuery({
     queryKey: ["fiscal-config", workshopId],
@@ -47,6 +51,8 @@ export function SettingsFiscal({ workshopId }: { workshopId: string }) {
         cidade: config.cidade || "",
         estado: config.estado || "",
         ambiente: config.ambiente || "homologacao",
+        certificado_senha: config.certificado_senha || "",
+        certificado_path: config.certificado_path || "",
       });
     }
   }, [config]);
@@ -68,6 +74,33 @@ export function SettingsFiscal({ workshopId }: { workshopId: string }) {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const handleCertificateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !workshopId) return;
+    if (!file.name.endsWith('.pfx') && !file.name.endsWith('.p12')) {
+      toast.error("O certificado deve ser no formato .pfx ou .p12");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) { 
+      toast.error("O certificado deve ter no máximo 5MB"); 
+      return; 
+    }
+    
+    setUploading(true);
+    try {
+      const path = `${workshopId}/certificado-${Date.now()}.pfx`;
+      const { error: upErr } = await supabase.storage.from("certificates").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      
+      setFormData(prev => ({ ...prev, certificado_path: path }));
+      toast.success("Certificado enviado! Não esqueça de colocar a senha e Salvar.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao enviar certificado");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
@@ -146,16 +179,32 @@ export function SettingsFiscal({ workshopId }: { workshopId: string }) {
         <div className="space-y-6">
           <Card className="p-6 space-y-4">
             <h3 className="font-semibold text-sm border-b pb-2">Certificado Digital A1</h3>
-            <Card className="p-6 border-dashed border-2 flex flex-col items-center justify-center text-center bg-muted/20 hover:bg-muted/40 transition cursor-pointer">
-              <Upload className="h-8 w-8 text-muted-foreground mb-4" />
-              <p className="font-medium text-sm">Upload do Certificado (.pfx)</p>
+            <label className="block p-6 border-dashed border-2 flex flex-col items-center justify-center text-center bg-muted/20 hover:bg-muted/40 transition cursor-pointer rounded-xl">
+              {uploading ? (
+                <Loader2 className="h-8 w-8 text-muted-foreground mb-4 animate-spin" />
+              ) : formData.certificado_path ? (
+                <FileText className="h-8 w-8 text-primary mb-4" />
+              ) : (
+                <Upload className="h-8 w-8 text-muted-foreground mb-4" />
+              )}
+              <p className="font-medium text-sm">
+                {formData.certificado_path ? "Certificado carregado" : "Upload do Certificado (.pfx)"}
+              </p>
               <p className="text-xs text-muted-foreground mt-1 mb-4">Necessário para assinar as notas fiscalmente.</p>
-              <Button variant="outline" size="sm" className="pointer-events-none">Selecionar Arquivo</Button>
-            </Card>
+              <span className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3">
+                {formData.certificado_path ? "Substituir Arquivo" : "Selecionar Arquivo"}
+              </span>
+              <input type="file" accept=".pfx,.p12" className="hidden" onChange={handleCertificateUpload} disabled={uploading} />
+            </label>
             
             <div className="space-y-2 pt-2">
               <Label>Senha do Certificado</Label>
-              <Input type="password" placeholder="******" />
+              <Input 
+                type="password" 
+                placeholder="******" 
+                value={formData.certificado_senha}
+                onChange={(e) => setFormData({...formData, certificado_senha: e.target.value})}
+              />
             </div>
           </Card>
 
